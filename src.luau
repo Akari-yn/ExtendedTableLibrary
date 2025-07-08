@@ -286,6 +286,17 @@ type ExtendedTableLibrary = {
 	unzipArray: (zippedArray: array<array>) -> array<array>,
 
 	--[=[
+		GetRandomValue
+
+		Returns a random value from the given array. If the array is empty, it returns nil.
+
+		@param array The array to get a random value from.
+		@param removeFromArray? If true, the selected value is removed from the array (default is false).
+		@return A random value from the array, or nil if the array is empty.
+	]=]
+	getRandomValue: <T>(array: array<T>, removeFromArray: boolean?) -> T,
+
+	--[=[
 		GroupBy
 
 		Groups the elements of a table by a specified key or property.
@@ -929,6 +940,18 @@ local function unzipArray(zippedArray: array<array>)
 	end
 
 	return result
+end
+
+local function getRandomValue<T>(array: array<T>, removeFromArray: boolean?): T?
+	local size = #array
+	if size == 0 then return nil end -- Return nil if the array is empty.
+
+	local index = math.random(1, size) -- Get a random index from 1 to size.
+	if removeFromArray then
+		return table.remove(array, index) -- Remove the value at the random index.
+	end
+
+	return array[index] -- Return the value at the random index without removing it.
 end
 
 local function groupBy<K, V, G>(tbl: table<K, V>, callback: (K, V) -> G): table<G, array<V>>
