@@ -1174,8 +1174,8 @@ end
 --// Return \\--
 
 return table.freeze({
-	--// Functions \\--
-
+	--// Table Functions \\--
+	
 	mergeTables = mergeTables,
 	accumulateTables = accumulateTables,
 	mapTable = mapTable,
@@ -1183,9 +1183,14 @@ return table.freeze({
 	reduceTable = reduceTable,
 	matchTable = matchTable,
 	diffTables = diffTables,
-
+	
+	groupBy = groupBy,
+	deepCopy = deepCopy,
+	deepEqual = deepEqual,
+	deepFreeze = deepFreeze,
+	
 	--// Array Functions \\--
-
+	
 	extendArraySize = extendArraySize,
 	setArraySize = setArraySize,
 	truncateArray = truncateArray,
@@ -1197,23 +1202,14 @@ return table.freeze({
 	shuffleArray = shuffleArray,
 	zipArray = zipArray,
 	unzipArray = unzipArray,
-
-	--// Table Functions \\--
-
-	groupBy = groupBy,
-	deepCopy = deepCopy,
-	deepEqual = deepEqual,
-	deepFreeze = deepFreeze,
-
-	--// Pretty Print \\--
-
-	prettyPrint = prettyPrint,
-
+	
 	--// Miscellaneous \\--
-
+	
+	prettyPrint = prettyPrint,
+	
 	isContiguousArray = isContiguousArray,
 	isSparseArray = isSparseArray,
-
+	
 	getAllocatedHashSize = getAllocatedHashSize,
 	getAllocatedArraySize = getAllocatedArraySize,
 	getTableMemorySize = getTableMemorySize,
