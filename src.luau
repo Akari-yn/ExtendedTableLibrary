@@ -5,7 +5,7 @@
 	---------------------------------------------
 	Author: @akari_yn
 	Date: 2025-07-08 (Last Updated)
-	Version: 1.0.0
+	Version: 1.1.0
 
 	Description:
 	A comprehensive Luau utility library designed to supercharge the standard 'table' object.
@@ -96,7 +96,7 @@ type ExtendedTableLibrary = {
 	]=]
 
 	--[=[
-		MergeTables
+		MergeTablesWith
 
 		Recursively merging tables, combining their keys and values.
 		If a key exists in more than one tables:
@@ -111,7 +111,27 @@ type ExtendedTableLibrary = {
 		@param ... Two or more tables to merge.
 		@return A new table or modified first table with all inputs merged.
 	]=]
-	mergeTables: (inPlace: boolean?, depth: number?, ...table) -> (table),
+	mergeTablesWith: <K, V>(inPlace: boolean?, depth: number?, ...table<K, V>) -> (table<K, V>),
+
+	--[=[
+		MergeWith
+
+		Recursively merges multiple tables, allowing a custom resolver function to handle conflicts.
+		If a key exists in more than one table:
+			- If both values are tables, they are merged recursively.
+			- Otherwise, the resolver function is applied to combine the values.
+
+		- If `depth` is -1, it merges all nested tables without depth limit.
+		- If `inPlace` is true, the first table is modified in place and returned. Otherwise, a new table is returned.
+
+		@param inPlace? Whether to modify and return the first table instead of creating a new table (default is false).
+		@param depth? The depth to merge nested tables (default is -1).
+		@param resolver A function that resolves conflicts between two values.
+				It receives the key and two values and returns the resolved value.
+		@param ... Two or more tables to merge.
+		@return A new table or modified first table with all inputs merged.
+	]=]
+	mergeWith: <K, V>(inPlace: boolean?, depth: number?, resolver: (K, V, V) -> (any), ...table<K, V>) -> table<K, V>,
 
 	--[=[
 		AccumulateTables
@@ -144,7 +164,9 @@ type ExtendedTableLibrary = {
 			- `removed`: table<kA, vA> — entries present in `old` but not in `new`.
 			- `changed`: table<kA, vA> — entries that exist in both but have different values.
 	]=]
-	diffTables: <kA, vA, kB, vB>(old: table<kA, vA>, new: table<kB, vB>) -> { added: table<kB, vB>, removed: table<kA, vA>, changed: table<kA, vA> },
+	diffTables: <kA, vA, kB, vB>(old: table<kA, vA>, new: table<kB, vB>) -> {
+		added: table<kA | kB, vA | vB>, removed: table<kA | kB, vA | vB>, changed: table<kA | kB, vA | vB>
+	},
 
 	--[=[
 		SyncTable
@@ -197,7 +219,7 @@ type ExtendedTableLibrary = {
 	reduceTable: <K, V, U>(tbl: table<K, V>, reducer: (U, K, V) -> U, initial: U) -> U,
 
 	--[=[
-		GroupBy
+		GroupTableBy
 
 		Groups the elements of a table by a specified key or property.
 		The callback function receives each key-value pair and returns the grouping key.
@@ -206,7 +228,7 @@ type ExtendedTableLibrary = {
 		@param callback The function that determines the grouping key for each key-value pair.
 		@return A new table where keys are the grouping keys and values are arrays of grouped items.
 	]=]
-	groupBy: <K, V, G>(tbl: table<K, V>, callback: (K, V) -> G) -> table<G, array<V>>,
+	groupTableBy: <K, V, G>(tbl: table<K, V>, callback: (K, V) -> G) -> table<G, array<V>>,
 
 	--[=[
 		TableToPairs
@@ -228,6 +250,41 @@ type ExtendedTableLibrary = {
 		@return A new table with keys and values swapped.
 	]=]
 	invertTable: <K, V>(tbl: table<K, V>) -> table<V, K>,
+
+	--[=[
+		TableIntersection
+
+		Finds the intersection of two tables, returning a new table containing only the keys and values
+		that are present in both tables.
+
+		@param tbl1 The first table.
+		@param tbl2 The second table.
+		@return A new table containing only the key-value pairs that exist in both input tables.
+	]=]
+	tableIntersection: <K, V>(tbl1: table<K, V>, tbl2: table<K, V>) -> table<K, V>,
+
+	--[=[
+		TableDifference
+
+		Finds the difference between two tables, returning a new table containing only the keys and values
+		that are present in the first table but not in the second.
+
+		@param tbl1 The first table.
+		@param tbl2 The second table.
+		@return A new table containing only the key-value pairs that exist in `tbl1` but not in `tbl2`.
+	]=]
+	tableDifference: <K, V>(tbl1: table<K, V>, tbl2: table<K, V>) -> table<K, V>,
+
+	--[=[
+		RemoveAll
+
+		Removes all occurrences of a specified value from a table.
+		If the value is an array, it removes all elements that match any of the values in the array.
+
+		@param tbl The table to modify.
+		@param value The value or array of values to remove from the table.
+	]=]
+	removeAll: <K, V, T>(tbl: table<K, V>, value: T | array<T>) -> (),
 
 	--[=[
 	==============================
@@ -281,6 +338,16 @@ type ExtendedTableLibrary = {
 	concatArrays: <T>(inPlace: boolean?, ...array<T>) -> array<T>,
 
 	--[=[
+		UnionArrays
+
+		Creates a new array that contains all unique elements from the input arrays.
+
+		@param ...array The arrays to union.
+		@return A new array containing all unique elements from the input arrays.
+	]=]
+	unionArrays: <T>(...array<T>) -> array<T>,
+
+	--[=[
 		FlattenArray
 
 		Recursively flattens a nested array up to a given depth.
@@ -326,6 +393,17 @@ type ExtendedTableLibrary = {
 		@param array The array to reverse.
 	]=]
 	reverseArray: <T>(array: array<T>) -> (),
+
+	--[=[
+		RotateArray
+
+		Rotates the elements of an array by a specified number of positions.
+		A positive shift rotates to the right, while a negative shift rotates to the left.
+
+		@param array The array to rotate.
+		@param shift The number of positions to rotate. Positive values rotate right, negative values rotate left.
+	]=]
+	rotateArray: <T>(array: array<T>, shift: number) -> (),
 
 	--[=[
 		SliceArray
@@ -378,11 +456,13 @@ type ExtendedTableLibrary = {
 		RemoveDuplicate
 
 		Removes duplicate values from an array, preserving the order of the first occurrence.
+		An optional `by` function can be provided to determine uniqueness based on a transformed value.
 
 		@param array The array to process.
+		@param by? An optional function that takes an element and returns a value to be used for uniqueness checks.
 		@return A new array with duplicates removed.
 	]=]
-	removeDuplicate: <T>(array: array<T>) -> array<T>,
+	removeDuplicate: <T, K>(array: array<T>, by: ((value: T) -> K)?) -> array<T>,
 
 	--[=[
 		SwapRemove
@@ -451,6 +531,48 @@ type ExtendedTableLibrary = {
 	unzipArray: (zippedArray: array<array>) -> array<array>,
 
 	--[=[
+		PartitionArray
+
+		Splits an array into smaller arrays of a specified size.
+
+		@param array The array to partition.
+		@param size The size of each partition.
+		@return An array of arrays, where each sub-array has at most `size` elements.
+	]=]
+	partitionArray: <T>(array: array<T>, size: number) -> array<array<T>>,
+
+	--[=[
+		PartitionArrayBy
+
+		Splits an array into two arrays based on a predicate function.
+		The first array contains elements that satisfy the predicate, and the second contains those that do not.
+
+		@param array The array to partition.
+		@param predicate A function that takes an element and returns true or false.
+			If true, the element goes into the first array; if false, it goes into the second.
+		@return A tuple containing two arrays: the first with elements that satisfy the predicate,
+			and the second with elements that do not.
+	]=]
+	partitionArrayBy: <T, A, B>(array: array<T>, predicate: (T) -> boolean) -> (array<A>, array<B>),
+
+	--[=[
+		BinarySearch
+
+		Performs a binary search on a sorted array to find the index of a specified value.
+		If the value is not found, it returns nil.
+
+		@param array The sorted array to search.
+		@param value The value to search for.
+		@param comparator? An optional comparator function that takes two values and returns:
+			- A negative number if the first value is less than the second,
+			- Zero if they are equal,
+			- A positive number if the first value is greater than the second.
+			If not provided, uses the default equality check.
+		@return The index of the found value, or nil if not found.
+	]=]
+	binarySearch: <K, V>(array: array<K>, value: K, comparator: ((K, K) -> number)?) -> number?,
+
+	--[=[
 	==============================
 	 4. Inspection & Metadata
 	==============================
@@ -484,7 +606,7 @@ type ExtendedTableLibrary = {
 		@param array The array to check.
 		@return True if the array is contiguous, otherwise false.
 	]=]
-	isContiguousArray: <T>(array: array<T>) -> boolean,
+	isContiguousArray: <K, V>(tbl: table<K, V>) -> boolean,
 
 	--[=[
 		IsSparseArray
@@ -495,8 +617,98 @@ type ExtendedTableLibrary = {
 		@param array The array to check.
 		@return True if the array is sparse, otherwise false.
 	]=]
-	isSparseArray: <T>(array: array<T>) -> boolean,
+	isSparseArray: <K, V>(tbl: table<K, V>) -> boolean,
 
+	--[=[
+		IsArray
+
+		Checks if a table is an array, which means it has only positive integer keys.
+
+		@param tbl The table to check.
+		@return True if the table is an array, otherwise false.
+	]=]
+	isArray: <K, V>(tbl: table<K, V>) -> boolean,
+
+	--[=[                
+		IsEmpty
+
+		Checks if a table is empty, meaning it has no keys or values.
+
+		@param tbl The table to check.
+		@return True if the table is empty, otherwise false.
+	]=]
+	isEmpty: <K, V>(tbl: table<K, V>) -> boolean,
+
+	--[=[
+		HasKey
+
+		Checks if a table contains a specific key.
+
+		@param tbl The table to check.
+		@param key The key to look for.
+		@return True if the table has the specified key, otherwise false.
+	]=]
+	hasKey: <K, V>(tbl: table<K, V>, key: K) -> boolean,
+
+	--[=[
+		HasValue
+
+		Checks if a table contains a specific value.
+
+		@param tbl The table to check.
+		@param value The value to look for.
+		@return True if the table has the specified value, otherwise false.
+	]=]
+	hasValue: <K, V>(tbl: table<K, V>, value: V) -> boolean,
+
+	--[=[
+		CountOccurences
+
+		Counts the number of occurrences of a specific value in a table.
+		This is useful for determining how many times a value appears in the table.
+
+		@param tbl The table to inspect.
+		@param value The value to count occurrences of.
+		@return The number of times the specified value appears in the table.
+	]=]
+	countOccurences: <K, V>(tbl: table<K, V>, value: V) -> number,
+
+	--[=[
+		CountKeysByType
+
+		Counts the number of keys in a table that match a specific type.
+		This is useful for filtering keys based on their type.
+
+		@param tbl The table to inspect.
+		@param keyType The type of keys to count (e.g., "string", "number").
+		@return The number of keys in the table that match the specified type.
+	]=]
+	countKeysByType: <K, V>(tbl: table<K, V>, keyType: string) -> number,
+
+	--[=[
+		CountValuesByType
+
+		Counts the number of values in a table that match a specific type.
+		This is useful for filtering values based on their type.
+
+		@param tbl The table to inspect.
+		@param valueType The type of values to count (e.g., "string", "number").
+		@return The number of values in the table that match the specified type.
+	]=]
+	countValuesByType: <K, V>(tbl: table<K, V>, value: V) -> number,
+
+	--[=[
+		KeysOfValue
+
+		Retrieves all keys in a table that map to a specific value.
+		This is useful for finding all keys associated with a particular value.
+
+		@param tbl The table to search.
+		@param targetValue The value to find keys for.
+		@return An array of keys that map to the specified value.
+	]=]
+	keysOfValue: <K, V>(tbl: table<K, V>, targetValue: V) -> array<K>,
+	
 	--[=[
 	==============================
 	 5. Functional Utilities
@@ -568,6 +780,17 @@ type ExtendedTableLibrary = {
 	some: <K, V>(tbl: table<K, V>, filter: (K, V) -> boolean) -> boolean,
 
 	--[=[
+		ToSet
+
+		Converts a table into a set, where each key is the original key and the value is always true.
+		This is useful for quickly checking membership in a set.
+
+		@param tbl The table to convert.
+		@return A new table where each key from the original table maps to true.
+	]=]
+	toSet: <K, V>(tbl: table<K, V>) -> table<K, boolean>,
+
+	--[=[
 	==============================
 	 6. Conversion & Formatting
 	==============================
@@ -583,6 +806,18 @@ type ExtendedTableLibrary = {
 		@return A string representation of the table.
 	]=]
 	prettyPrint: <K, V>(tbl: table<K, V>, indent: number?) -> string,
+
+	--[=[
+		ToCSV
+
+		Converts a 2D array (array of arrays) into a CSV string format.
+		Each inner array represents a row, and elements are separated by a specified delimiter.
+
+		@param rows The 2D array to convert to CSV.
+		@param delimiter? The character used to separate values in the CSV (default is ",").
+		@return A string representing the CSV format of the input array.
+	]=]
+	toCSV: <T>(rows: array<array<T>>, delimiter: string?) -> string
 
 } & typeof(table) -- Extend the table type with the ExtendedTableLibrary methods.
 
@@ -611,54 +846,13 @@ local function checkArgs(argName: string, argType: string, argValue: any, option
 	error(`Expected argument '{argName}' to be of type '{argType}', got '{type(argValue)}'`, 3)
 end
 
-local function deepCopy<K, V, T>(tbl: table<K, V>, valueMap: table<T, T>?): table<K, V>
-	if type(tbl) == "buffer" then
-		local bufferLen = buffer.len(tbl)
-		local newBuffer = buffer.create(bufferLen)
-		buffer.copy(tbl, 0, newBuffer)
+local deepCopy
 
-		if valueMap then valueMap[tbl] = newBuffer end
-		return newBuffer :: any
-	end
-
-	if STRICT_MODE then checkArgs("tbl", "table", tbl) end
-
-	-- Create a shallow copy first, which pre-allocate and copies top-level keys and values.
-	local copy: table = table.clone(tbl)
-	if valueMap then
-		valueMap[tbl] = copy
-	else
-		valueMap = {[tbl] = copy}
-	end
-
-	assert(valueMap) -- Type Reinforcement.
-
-	-- Use a constant to avoid loading a string in every iteration.
-	local TABLE_TYPE = "table"
-	TABLE_TYPE = TABLE_TYPE -- Prevent folding.
-
-	local BUFFER_TYPE = CHECK_BUFFER_VALUE and "buffer"
-	BUFFER_TYPE = BUFFER_TYPE -- Prevent folding.
-
-	-- Iterate through the table to handle nested tables.
-	for k, v in tbl :: table do
-		local keyType = type(k)
-		local valueType = type(v)
-
-		local shouldCloneKey = keyType == TABLE_TYPE or (CHECK_BUFFER_VALUE and keyType == BUFFER_TYPE)
-		local shouldCloneValue = valueType == TABLE_TYPE or (CHECK_BUFFER_VALUE and valueType == BUFFER_TYPE)
-
-		if shouldCloneKey then
-			copy[k] = nil
-			k = valueMap[k] or deepCopy(k :: K, valueMap)
-			copy[k] = if shouldCloneValue then valueMap[v] or deepCopy(v) else v
-		elseif shouldCloneValue then
-			copy[k] = valueMap[v] or deepCopy(v)
-		end
-	end
-
-	return copy :: table<K, V>
-end
+--[=[
+==============================
+ 1. Memory & Size Utilities
+==============================
+]=]
 
 local function getAllocatedArraySize<K, V>(tbl: table<K, V>): number
 	if STRICT_MODE then checkArgs("tbl", "table", tbl) end
@@ -840,7 +1034,13 @@ local function getTableSize<K, V>(tbl: table<K, V>, isContiguous: boolean?): num
 	return size
 end
 
-local function mergeInPlace(valueMap: table, depth: number, result: table, ...: table): table
+--[=[
+==============================
+ 2. Table Transformation
+==============================
+]=]
+
+local function mergeInPlace(valueMap: table, depth: number, resolver: ((any, any, any) -> (any))?, result: table, ...: table): table
 	local resultCache = valueMap[result]
 	if not resultCache then
 		resultCache = {}
@@ -862,10 +1062,20 @@ local function mergeInPlace(valueMap: table, depth: number, result: table, ...: 
 			end
 
 			local existingType = type(existingValue)
-			if existingType ~= "table" then continue end
+			if existingType ~= "table" then
+				if resolver then
+					result[k] = resolver(k, existingValue, v)
+				end
+				continue
+			end
 
 			local valueType = type(v)
-			if valueType ~= "table" then continue end
+			if valueType ~= "table" then
+				if resolver then
+					result[k] = resolver(k, existingValue, v)
+				end
+				continue
+			end
 
 			if depth > 1 then
 				result[k] = mergeInPlace(valueMap, depth - 1, existingValue :: any, v)
@@ -876,7 +1086,7 @@ local function mergeInPlace(valueMap: table, depth: number, result: table, ...: 
 	return result
 end
 
-local function mergeTables(inPlace: boolean?, depth: number?, src: table, ...: table): table
+local function mergeTables<K, V>(inPlace: boolean?, depth: number?, src: table<K, V>, ...: table<K, V>): table<K, V>
 	if STRICT_MODE then
 		checkArgs("inPlace", "boolean", inPlace, true)
 		checkArgs("depth", "number", depth, true)
@@ -887,7 +1097,22 @@ local function mergeTables(inPlace: boolean?, depth: number?, src: table, ...: t
 	if depth == -1 then depth = math.huge end -- Convert -1 to a very large number for practical purposes.
 
 	local result: table = inPlace and src or deepCopy(src)
-	return mergeInPlace({}, depth, result, ...)
+	return mergeInPlace({}, depth, nil, result, ...)
+end
+
+local function mergeTablesWith<K, V>(inPlace: boolean?, depth: number?, resolver: (K, V, V) -> (any), src: table<K, V>, ...: table<K, V>): table<K, V>
+	if STRICT_MODE then
+		checkArgs("inPlace", "boolean", inPlace, true)
+		checkArgs("depth", "number", depth, true)
+		checkArgs("resolver", "function", resolver)
+		checkArgs("src", "table", src)
+	end
+
+	depth = depth or -1 -- Default depth is -1, meaning no limit on recursion depth.
+	if depth == -1 then depth = math.huge end -- Convert -1 to a very large number for practical purposes.
+
+	local result: table = inPlace and src or deepCopy(src)
+	return mergeInPlace({}, depth, resolver, result, ...)
 end
 
 local function accumulateInPlace(valueMap: table, result: table, ...: table): table
@@ -935,108 +1160,7 @@ local function accumulateTables<K, V>(inPlace: boolean?, src: table, ...: table<
 	return accumulateInPlace({}, result, ...)
 end
 
-local function mapTable<K, V, U>(tbl: table<K, V>, callback: (K, V) -> U): table<K, U>
-	if STRICT_MODE then
-		checkArgs("tbl", "table", tbl)
-		checkArgs("callback", "function", callback)
-	end
-
-	local result: table<K, U> = table.clone(tbl) -- Create a shallow copy of the original table to pre-allocate.
-
-	-- Iterate through each key-value pair in the original table.
-	for k, v in tbl do
-		-- Apply the callback function to each key-value pair and store the result.
-		result[k] = callback(k, v)
-	end
-
-	return result
-end
-
-local function filtterTable<K, V, U>(tbl: table<K, V>, predicate: (K, V) -> boolean): table<U, V>
-	if STRICT_MODE then
-		checkArgs("tbl", "table", tbl)
-		checkArgs("predicate", "function", predicate)
-	end
-
-	local result: table<U, V> = table.clone(tbl) -- Create a shallow copy of the original table to pre-allocate.
-
-	-- Iterate through each key-value pair in the original table.
-	for k, v in tbl do
-		-- If the predicate returns true for this key-value pair, add it to the result.
-		result[k] = if predicate(k, v) then v else nil
-	end
-
-	return result
-end
-
-local function reduceTable<K, V, U>(tbl: table<K, V>, reducer: (U, K, V) -> U, accumulator: U): U
-	if STRICT_MODE then
-		checkArgs("tbl", "table", tbl)
-		checkArgs("reducer", "function", reducer)
-		checkArgs("accumulator", "any", accumulator)
-	end
-
-	-- Iterate through each key-value pair in the table.
-	for k, v in tbl do
-		-- Apply the reducer function to the current accumulated value, key, and value.
-		accumulator = reducer(accumulator, k, v)
-	end
-
-	return accumulator
-end
-
-local function findMatch<K, V>(tbl: table<K, V>, filter: (K, V) -> boolean): K?
-	if STRICT_MODE then
-		checkArgs("tbl", "table", tbl)
-		checkArgs("filter", "function", filter)
-	end
-
-	-- Iterate through each key-value pair in the table.
-	for k, v in tbl do
-		-- If the filter returns true for this key-value pair, return the key.
-		if filter(k, v) then
-			return k
-		end
-	end
-
-	return nil -- Return nil if no matching key is found.
-end
-
-local function every<K, V>(tbl: table<K, V>, filter: (K, V) -> boolean): boolean
-	if STRICT_MODE then
-		checkArgs("tbl", "table", tbl)
-		checkArgs("filter", "function", filter)
-	end
-
-	-- Iterate through each key-value pair in the table.
-	for k, v in tbl do
-		-- If the filter returns false for any key-value pair, return false.
-		if not (filter(k, v) :: boolean) then
-			return false
-		end
-	end
-
-	return true -- Return true if all key-value pairs satisfy the filter.
-end
-
-local function some<K, V>(tbl: table<K, V>, filter: (K, V) -> boolean): boolean
-	if STRICT_MODE then
-		checkArgs("tbl", "table", tbl)
-		checkArgs("filter", "function", filter)
-	end
-
-	-- Iterate through each key-value pair in the table.
-	for k, v in tbl do
-		-- If the filter returns true for any key-value pair, return true.
-		if filter(k, v) then
-			return true
-		end
-	end
-
-	return false -- Return false if no key-value pair satisfies the filter.
-end
-
-local function diffTables<kA, vA, kB, vB>(old: table<kA, vA>, new: table<kB, vB>): { added: table<kB, vB>, removed: table<kA, vA>, changed: table<kA, vA> }
+local function diffTables<kA, vA, kB, vB>(old: table<kA, vA>, new: table<kB, vB>)
 	if STRICT_MODE then
 		checkArgs("old", "table", old)
 		checkArgs("new", "table", new)
@@ -1065,15 +1189,10 @@ local function diffTables<kA, vA, kB, vB>(old: table<kA, vA>, new: table<kB, vB>
 	return { added = added, removed = removed, changed = changed }
 end
 
-local function syncTable<kS, vS, kT, vT>(src: table<kS, vS>, target: table<kT, vT>, inPlace: boolean?): table<kT, vT>
+local function syncTable<kS, vS, kT, vT>(src: table<kS, vS>, target: table<kT, vT>): table<kT, vT>
 	if STRICT_MODE then
 		checkArgs("src", "table", src)
 		checkArgs("target", "table", target)
-		checkArgs("inPlace", "boolean", inPlace, true)
-	end
-
-	if inPlace == false then
-		target = table.clone(target) -- Create a shallow copy of the target table if not in-place.
 	end
 
 	for k, v in src do
@@ -1102,7 +1221,7 @@ local function syncTable<kS, vS, kT, vT>(src: table<kS, vS>, target: table<kT, v
 		end
 
 		-- If both values are tables, recursively sync them.
-		target[k] = syncTable(v :: table<kS, vS>, targetValue :: table<kT, vT>, inPlace)
+		target[k] = syncTable(v :: table<kS, vS>, targetValue :: table<kT, vT>)
 	end
 
 	for k in target do
@@ -1115,25 +1234,230 @@ local function syncTable<kS, vS, kT, vT>(src: table<kS, vS>, target: table<kT, v
 	return target
 end
 
-local function extendArraySize<T>(array: array<T>, expandSize: number)
+local function mapTable<K, V, U>(tbl: table<K, V>, callback: (K, V) -> U): table<K, U>
 	if STRICT_MODE then
-		checkArgs("array", "table", array)
+		checkArgs("tbl", "table", tbl)
+		checkArgs("callback", "function", callback)
+	end
+
+	local result: table<K, U> = table.clone(tbl) -- Create a shallow copy of the original table to pre-allocate.
+
+	-- Iterate through each key-value pair in the original table.
+	for k, v in tbl do
+		-- Apply the callback function to each key-value pair and store the result.
+		result[k] = callback(k, v)
+	end
+
+	return result
+end
+
+local function filterTable<K, V, U>(tbl: table<K | U, V>, predicate: (K | U, V) -> boolean, preAllocate: boolean?): table<U, V>
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		checkArgs("predicate", "function", predicate)
+		checkArgs("preAllocate", "boolean", preAllocate, true)
+	end
+
+	if preAllocate ~= false then
+		-- Create a shallow copy of the original table to pre-allocate.
+		local result: table<U, V> = table.clone(tbl)
+
+		-- Iterate through each key-value pair in the original table.
+		for k, v in tbl do
+			-- If the predicate returns true for this key-value pair, add it to the result.
+			if not (predicate(k, v) :: boolean) then
+				result[k] = nil
+			end
+		end
+
+		return result
+	else
+		local result = {}
+		-- Iterate through each key-value pair in the original table.
+		for k, v in tbl do
+			-- If the predicate returns true for this key-value pair, add it to the result.
+			if predicate(k, v) then
+				result[k] = v
+			end
+		end
+
+		return result
+	end
+end
+
+local function reduceTable<K, V, U>(tbl: table<K, V>, reducer: (U, K, V) -> U, initial: U): U
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		checkArgs("reducer", "function", reducer)
+		-- checkArgs("initial", "any", initial)
+	end
+
+	local accumulator = initial
+	-- Iterate through each key-value pair in the table.
+	for k, v in tbl do
+		-- Apply the reducer function to the current accumulated value, key, and value.
+		accumulator = reducer(accumulator, k, v)
+	end
+
+	return accumulator
+end
+
+local function groupTableBy<K, V, G>(tbl: table<K, V>, callback: (K, V) -> G): table<G, array<V>>
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		checkArgs("callback", "function", callback)
+	end
+
+	local result: table<G, array<V>> = {}
+
+	-- Iterate through each key-value pair in the table.
+	for k, v in tbl :: table do
+		-- Get the grouping key using the callback function.
+		local groupKey = callback(k, v)
+		if groupKey == nil then
+			error("Group key cannot be nil", 2)
+		end
+
+		local groupTable = result[groupKey :: G]
+
+		-- If the group does not exist yet, create it.
+		if not groupTable then
+			groupTable = {}
+			result[groupKey] = groupTable
+		end
+
+		-- Add the value to the corresponding group.
+		table.insert(groupTable, v)
+	end
+
+	return result
+end
+
+local function tableToPairs<K, V>(tbl: table<K, V>): array<{ K | V }>
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+	end
+
+	local result: array<{ K | V }> = {}
+
+	-- Iterate through each key-value pair in the table.
+	for k, v in tbl do
+		table.insert(result, { k, v })
+	end
+
+	return result
+end
+
+local function invertTable<K, V>(tbl: table<K, V>): table<V, K>
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+	end
+
+	local result: table<V, K> = {}
+
+	-- Iterate through each key-value pair in the table.
+	for k, v in tbl do
+		result[v] = k -- Set the value as the key and the key as the value.
+	end
+
+	return result
+end
+
+local function tableIntersection<K, V>(tbl1: table<K, V>, tbl2: table<K, V>): table<K, V>
+	if STRICT_MODE then
+		checkArgs("tbl1", "table", tbl1)
+		checkArgs("tbl2", "table", tbl2)
+	end
+
+	local result: table<K, V> = {}
+
+	-- Iterate through each key-value pair in the first table.
+	for k, v in tbl1 do
+		if tbl2[k] ~= nil then
+			result[k] = v -- If the key exists in both tables, add it to the result.
+		end
+	end
+
+	return result
+end
+
+local function tableDifference<K, V>(tbl1: table<K, V>, tbl2: table<K, V>): table<K, V>
+	if STRICT_MODE then
+		checkArgs("tbl1", "table", tbl1)
+		checkArgs("tbl2", "table", tbl2)
+	end
+
+	local result: table<K, V> = {}
+
+	-- Iterate through each key-value pair in the first table.
+	for k, v in tbl1 do
+		if tbl2[k] == nil then
+			result[k] = v -- If the key does not exist in the second table, add it to the result.
+		end
+	end
+	
+	-- Iterate through each key-value pair in the second table.
+	for k, v in tbl2 do
+		if tbl1[k] == nil then
+			result[k] = v -- If the key does not exist in the first table, add it to the result.
+		end
+	end
+
+	return result
+end
+
+local function removeAll<K, V, T>(tbl: table<K, V>, value: T | array<T>): ()
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		-- checkArgs("value", "any", value)
+	end
+
+	-- If 'value' is a table, convert it to a set for faster lookups.
+	if type(value) == "table" then
+		local valueSet: table<T, boolean> = {}
+		for _, v in value do
+			valueSet[v] = true
+		end
+
+		for k, v in tbl do
+			if valueSet[v] then
+				tbl[k] = nil -- If the value is in the set, remove it from the table.
+			end
+		end	
+	else
+		for k, v in tbl :: table do
+			if v == value then
+				tbl[k] = nil -- If the value matches, remove it from the table.
+			end
+		end	
+	end
+end
+
+--[=[
+==============================
+ 3. Array Manipulation
+==============================
+]=]
+
+local function extendArraySize<K, V>(tbl: table<K, V>, expandSize: number)
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
 		checkArgs("expandSize", "number", expandSize)
 	end
 
 	-- `table.move` with the same source and destination effectively extending the array length.
-	local size = getAllocatedArraySize(array)
-	table.move(array, size, size + expandSize, size)
+	local size = getAllocatedArraySize(tbl)
+	table.move(tbl, size, size + expandSize, size)
 end
 
-local function setArraySize<T>(array: array<T>, newSize: number)
+local function setArraySize<K, V>(tbl: table<K, V>, newSize: number)
 	if STRICT_MODE then
-		checkArgs("array", "table", array)
+		checkArgs("tbl", "table", tbl)
 		checkArgs("newSize", "number", newSize)
 	end
 
 	-- `table.move` with the same source and destination effectively extending the array length.
-	table.move(array, 1, newSize, 1)
+	table.move(tbl, 1, newSize, 1)
 end
 
 local function truncateArray<T>(array: array<T>, newSize: number): array<T>
@@ -1148,7 +1472,7 @@ local function truncateArray<T>(array: array<T>, newSize: number): array<T>
 	end
 
 	local result: array<T> = table.create(newSize)
-	table.move(array, 1, length, 1, result)
+	table.move(array, 1, newSize, 1, result)
 
 	return result
 end
@@ -1187,6 +1511,29 @@ local function concatArrays<T>(inPlace: boolean?, ...: array<T>): array<T>
 		-- Move the contents of the sub-array into the result array.
 		table.move(subArray, 1, subSize, insertIndex, result)
 		insertIndex = insertIndex + subSize -- Update the insertion index for the next block.
+	end
+
+	return result
+end
+
+local function unionArrays<T>(...: array<T>): array<T>
+	if STRICT_MODE then
+		for i = 1, select("#", ...) do
+			checkArgs("arg" .. i, "table", select(i, ...))
+		end
+	end
+
+	local result: array<T> = {}
+	local seen: table<T, boolean> = {}
+
+	for i = 1, select("#", ...) do
+		local subArray = select(i, ...)
+		for _, value in subArray do
+			if not seen[value] then
+				seen[value] = true -- Mark this value as seen.
+				table.insert(result, value) -- Add it to the result array.
+			end
+		end
 	end
 
 	return result
@@ -1331,7 +1678,7 @@ end
 local function fillArray<T>(array: array<T>, value: T, startIndex: number?, endIndex: number?, sourceArray: array<T>?)
 	if STRICT_MODE then
 		checkArgs("array", "table", array)
-		checkArgs("value", "any", value)
+		-- checkArgs("value", "any", value)
 		checkArgs("startIndex", "number", startIndex, true)
 		checkArgs("endIndex", "number", endIndex, true)
 		checkArgs("sourceArray", "table", sourceArray, true)
@@ -1356,7 +1703,7 @@ local function fillArray<T>(array: array<T>, value: T, startIndex: number?, endI
 			local fillArraySize = #sourceArray
 
 			if fillSize <= fillArraySize then
-				table.move(array, 1, fillSize, from, array)
+				table.move(sourceArray, 1, fillSize, from, array)
 			else
 				local lastIndex = fillSize // fillArraySize - 1
 
@@ -1388,6 +1735,27 @@ local function reverseArray<T>(array: array<T>)
 		local j = size - i + 1
 		array[i], array[j] = array[j], array[i]
 	end
+end
+
+local function rotateArray<T>(array: array<T>, shift: number)
+	if STRICT_MODE then
+		checkArgs("array", "table", array)
+		checkArgs("shift", "number", shift)
+	end
+
+	local size = #array
+	if size <= 1 or shift == 0 then return end -- No need to rotate if the array is empty, has one element, or no shift.
+
+	shift = shift % size -- Normalize the shift to be within the bounds of the array size.
+	if shift < 0 then
+		shift = size + shift -- Convert negative shifts to positive equivalent.
+	end
+
+	-- Use table.move to perform the rotation efficiently.
+	local temp = table.create(shift)
+	table.move(array, 1, shift, 1, temp) -- Store the first 'shift' elements in a temporary array.
+	table.move(array, shift + 1, size, 1) -- Move the rest of the elements to the front.
+	table.move(temp, 1, shift, size - shift + 1) -- Move the temporary elements to the end of the array.
 end
 
 local function sliceArray<T>(array: array<T>, startIndex: number?, endIndex: number?): array<T>
@@ -1498,6 +1866,85 @@ local function sampleValue<T>(array: array<T>, startIndex: number?, endIndex: nu
 	return array[index] -- Return the value at the randomly selected index.
 end
 
+local function removeDuplicate<T, K>(array: array<T>, by: ((value: T) -> K)?): array<T>
+	if STRICT_MODE then
+		checkArgs("array", "table", array)
+		checkArgs("by", "function", by, true)
+	end
+
+	local seen: table<T | K, boolean> = {}
+	local result: array<T> = {}
+
+	-- Iterate through the array and collect unique values.
+	for _, value in array do
+		local key = if by then by(value) else value
+		if seen[key] then continue end -- Skip if the value has already been seen.
+		seen[key] = true
+		table.insert(result, value)
+	end
+
+	return result
+end
+
+local function swapRemove<T>(array: array<T>, index: number)
+	if STRICT_MODE then
+		checkArgs("array", "table", array)
+		checkArgs("index", "number", index)
+	end
+
+	local lastIndex = #array
+	if index ~= lastIndex then
+		array[index] = array[lastIndex]
+	end
+	array[lastIndex] = nil
+end
+
+local function getAndRemove<T>(array: array<T>, index: number, swap: boolean?): T?
+	if STRICT_MODE then
+		checkArgs("array", "table", array)
+		checkArgs("index", "number", index)
+		checkArgs("swap", "boolean", swap, true)
+	end
+
+	local value = array[index]
+	if value == nil then return nil end
+
+	if swap then
+		local lastIndex = #array
+		array[index] = array[lastIndex] -- Swap the element with the last one.
+		array[lastIndex] = nil -- Remove the last element.
+	else
+		table.remove(array, index) -- Remove the element at the specified index.
+	end
+
+	return value -- Return the removed value.
+end
+
+local function findAndRemove<T>(array: array<T>, value: T, swap: boolean?): boolean
+	if STRICT_MODE then
+		checkArgs("array", "table", array)
+		-- checkArgs("value", "any", value)
+		checkArgs("swap", "boolean", swap, true)
+	end
+
+	local size = #array
+	if size == 0 then return false end -- Return false if the array is empty.
+
+	-- Iterate through the array to find the value.
+	for i, v in array :: array do
+		if v ~= value :: any then continue end
+		if swap then
+			array[i] = array[size]
+			array[size] = nil
+		else
+			table.remove(array, i) 
+		end
+		return true -- Return true if the value was found and removed.
+	end
+
+	return false -- Return false if the value was not found in the array.
+end
+
 local function zipArray(...)
 	local nArrays = select("#", ...)
 	if nArrays == 0 then return {} end
@@ -1554,6 +2001,97 @@ local function unzipArray(zippedArray: array<array>)
 	return result
 end
 
+local function partitionArray<T>(array: array<T>, size: number): array<array<T>>
+	if STRICT_MODE then
+		checkArgs("array", "table", array)
+		checkArgs("size", "number", size)
+	end
+
+	if size <= 0 then
+		error("Partition size must be greater than 0", 2)
+	end
+
+	local arraySize = #array
+	if arraySize == 0 then return {} end -- Return empty if the array is empty.
+
+	local resultSize = math.ceil(arraySize / size)
+	local result: array<array<T>> = table.create(resultSize) :: array<array<T>>
+	for i = 1, arraySize - size, size do
+		local partition: array<T> = table.create(size)
+		table.move(array, i, i + size - 1, 1, partition)
+		result[i // size + 1] = partition
+	end
+
+	do
+		local remainingSize = (arraySize + 1) % size - 1
+		local partition: array<T> = table.create(remainingSize)
+		table.move(array, arraySize - remainingSize + 1, arraySize, 1, partition)
+		result[resultSize] = partition -- Add the last partition with remaining elements.
+	end
+
+	return result
+end
+
+local function partitionArrayBy<T, A, B>(array: array<T>, predicate: (T) -> boolean): (array<A>, array<B>)
+	if STRICT_MODE then
+		checkArgs("array", "table", array)
+		checkArgs("predicate", "function", predicate)
+	end
+
+	local truePartition: array<A> = {}
+	local falsePartition: array<B> = {}
+
+	-- Iterate through the array and partition elements based on the predicate.
+	for _, value in array do
+		if predicate(value) then
+			table.insert(truePartition, value :: A) -- Add to true partition.
+		else
+			table.insert(falsePartition, value :: B) -- Add to false partition.
+		end
+	end
+
+	return truePartition, falsePartition
+end
+
+local function binarySearch<K>(array: array<K>, value: K, comparator: ((K, K) -> number)?): number?
+	if STRICT_MODE then
+		checkArgs("array", "table", array)
+		-- checkArgs("value", "any", value)
+		checkArgs("comparator", "function", comparator, true)
+	end
+
+	local low = 1
+	local high = #array
+
+	while low <= high do
+		local mid = (low + high) // 2
+		local midValue: any = array[mid]
+
+		local cmpResult: number
+		if comparator then
+			cmpResult = comparator(midValue, value)
+		else
+			cmpResult = (midValue == (value :: any)) and 0 or (midValue < (value :: any) and -1 or 1)
+		end
+
+		if cmpResult == 0 then
+			return mid -- Value found at index mid.
+		elseif cmpResult < 0 then
+			low = mid + 1 -- Search in the right half.
+		else
+			high = mid - 1 -- Search in the left half.
+		end
+	end
+
+	return nil -- Value not found.
+end
+
+--[=[
+==============================
+ 4. Inspection & Metadata
+==============================
+]=]
+
 local function getKeys<K, V>(tbl: table<K, V>): array<K>
 	if STRICT_MODE then
 		checkArgs("tbl", "table", tbl)
@@ -1585,133 +2123,229 @@ local function getValues<K, V>(tbl: table<K, V>): array<V>
 	return values
 end
 
-local function removeDuplicate<T>(array: array<T>): array<T>
-	if STRICT_MODE then
-		checkArgs("array", "table", array)
-	end
-
-	local seen: table<T, boolean> = {}
-	local result: array<T> = {}
-
-	-- Iterate through the array and collect unique values.
-	for _, value in array do
-		if seen[value] then continue end -- Skip if the value has already been seen.
-		seen[value] = true
-		table.insert(result, value)
-	end
-
-	return result
-end
-
-local function swapRemove<T>(array: array<T>, index: number)
-	if STRICT_MODE then
-		checkArgs("array", "table", array)
-		checkArgs("index", "number", index)
-	end
-
-	local lastIndex = #array
-	if index ~= lastIndex then
-		array[index] = array[lastIndex]
-	end
-	array[lastIndex] = nil
-end
-
-local function getAndRemove<T>(array: array<T>, index: number, swap: boolean?): T?
-	if STRICT_MODE then
-		checkArgs("array", "table", array)
-		checkArgs("index", "number", index)
-		checkArgs("swap", "boolean", swap, true)
-	end
-
-	local value = array[index]
-	if value == nil then return nil end
-
-	if swap then
-		local lastIndex = #array
-		array[index] = array[lastIndex] -- Swap the element with the last one.
-		array[lastIndex] = nil -- Remove the last element.
-	else
-		table.remove(array, index) -- Remove the element at the specified index.
-	end
-
-	return value -- Return the removed value.
-end
-
-local function findAndRemove<T>(array: array<T>, value: T, swap: boolean?): boolean
-	if STRICT_MODE then
-		checkArgs("array", "table", array)
-		checkArgs("value", "any", value)
-		checkArgs("swap", "boolean", swap, true)
-	end
-
-	local size = #array
-	if size == 0 then return false end -- Return false if the array is empty.
-
-	-- Iterate through the array to find the value.
-	for i, v in array :: array do
-		if v ~= value :: any then continue end
-		if swap then
-			array[i] = array[size]
-			array[size] = nil
-		else
-			table.remove(array, i) 
-		end
-		return true -- Return true if the value was found and removed.
-	end
-
-	return false -- Return false if the value was not found in the array.
-end
-
-local function groupBy<K, V, G>(tbl: table<K, V>, callback: (K, V) -> G): table<G, array<V>>
-	if STRICT_MODE then
-		checkArgs("tbl", "table", tbl)
-		checkArgs("callback", "function", callback)
-	end
-
-	local result: table<G, array<V>> = {}
-
-	-- Iterate through each key-value pair in the table.
-	for k, v in tbl :: table do
-		-- Get the grouping key using the callback function.
-		local groupKey = callback(k, v)
-		if groupKey == nil then
-			error("Group key cannot be nil", 2)
-		end
-
-		local groupTable = result[groupKey :: G]
-
-		-- If the group does not exist yet, create it.
-		if not groupTable then
-			groupTable = {}
-			result[groupKey] = groupTable
-		end
-
-		-- Add the value to the corresponding group.
-		table.insert(groupTable, v)
-	end
-
-	return result
-end
-
-local function invertTable<K, V>(tbl: table<K, V>): table<V, K>
+local function isContiguousArray<K, V>(tbl: table<K, V>): boolean
 	if STRICT_MODE then
 		checkArgs("tbl", "table", tbl)
 	end
 
-	local result: table<V, K> = {}
+	local length = #tbl
 
-	-- Iterate through each key-value pair in the table.
+	-- An empty array is contiguous only if it has no non-numeric keys.
+	if length == 0 then return next(tbl) == nil end
+	-- If there's an element right after the '#' length, it's not contiguous.
+	if next(tbl, length) ~= nil then return false end
+
+	local lastIndex: number
+
+	-- `ipairs` stops at the first nil value.
+	for i, _ in ipairs(tbl) do
+		lastIndex = i + 0
+	end
+
+	-- If the last index found by ipairs matches the length, the array is contiguous.
+	return lastIndex == length
+end
+
+local function isSparseArray<K, V>(tbl: table<K, V>): boolean
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+	end
+
+	local nextIndex, exitIndex = 1, nil
+
+	for i, _ in next, tbl :: table do
+		if i ~= nextIndex then
+			exitIndex = i
+			break
+		end
+		nextIndex = i + 1
+	end
+
+	if exitIndex == nil then return false end
+
+	for i, _ in next, tbl :: table, exitIndex do
+		if type(i) ~= "number" or i // 1 ~= i or i < 1 then
+			return false -- Not an array
+		end
+	end
+
+	return true
+end
+
+local function isArray<K, V>(tbl: table<K, V>): boolean
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+	end
+
+	for i: number in tbl do
+		if type(i) ~= "number" or (i :: number) // 1 ~= (i :: number) or (i :: number) < 1 then
+			return false -- Not an array
+		end
+	end
+
+	return true
+end
+
+local function isEmpty<K, V>(tbl: table<K, V>): boolean
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+	end
+
+	-- Check if the table is empty by checking if it has any keys.
+	return next(tbl) == nil
+end
+
+local function hasKey<K, V>(tbl: table<K, V>, key: K): boolean
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		-- checkArgs("key", "any", key)
+	end
+
+	-- Check if the key exists in the table.
+	return tbl[key] ~= nil
+end
+
+local function hasValue<K, V>(tbl: table<K, V>, value: V): boolean
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		-- checkArgs("value", "any", value)
+	end
+
+	-- Iterate through the table to check if the value exists.
+	for _, v: any in tbl do
+		if v :: any == value :: any then
+			return true -- Return true if the value is found.
+		end
+	end
+
+	return false -- Return false if the value is not found.
+end
+
+local function countOccurences<K, V>(tbl: table<K, V>, value: V): number
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		-- checkArgs("value", "any", value)
+	end
+
+	local count = 0
+
+	-- Iterate through the table to count occurrences of the value.
+	for _, v in tbl do
+		if v :: any == value :: any then
+			count += 1 -- Increment the count if the value matches.
+		end
+	end
+
+	return count -- Return the total count of occurrences.
+end
+
+local function countKeysByType<K, V>(tbl: table<K, V>, keyType: string): number
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		checkArgs("keyType", "string", keyType)
+	end
+
+	local count = 0
+	for k in tbl do
+		if typeof(k) == keyType then
+			count = count + 1
+		end
+	end
+	return count
+end
+
+local function countValuesByType<K, V>(tbl: table<K, V>, valueType: string): number
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		checkArgs("valueType", "string", valueType)
+	end
+
+	local count = 0
+	for _, v in tbl do
+		if typeof(v) == valueType then
+			count = count + 1
+		end
+	end
+	return count
+end
+
+local function keysOfValue<K, V>(tbl: table<K, V>, value: V): array<K>
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		-- checkArgs("value", "any", value)
+	end
+
+	local keys: array<K> = {}
+
+	-- Iterate through the table to find keys with the specified value.
 	for k, v in tbl do
-		result[v] = k -- Set the value as the key and the key as the value.
+		if v :: any == value :: any then
+			table.insert(keys, k) -- Add the key to the keys array if the value matches.
+		end
 	end
 
-	return result
+	return keys -- Return the array of keys with the specified value.
 end
 
-local function deepEqual(a: any, b: any, visited: table?): boolean
+--[=[
+==============================
+ 5. Functional Utilities
+==============================
+]=]
+
+function deepCopy<K, V>(tbl: table<K, V>, valueMap: table?): table<K, V>
+	if type(tbl) == "buffer" then
+		local bufferLen = buffer.len(tbl)
+		local newBuffer = buffer.create(bufferLen)
+		buffer.copy(tbl, 0, newBuffer)
+
+		if valueMap then valueMap[tbl] = newBuffer end
+		return newBuffer :: any
+	end
+
+	if STRICT_MODE then checkArgs("tbl", "table", tbl) end
+
+	-- Create a shallow copy first, which pre-allocate and copies top-level keys and values.
+	local copy: table = table.clone(tbl)
+	if valueMap then
+		valueMap[tbl] = copy
+	else
+		valueMap = {[tbl] = copy}
+	end
+
+	assert(valueMap) -- Type Reinforcement.
+
+	-- Use a constant to avoid loading a string in every iteration.
+	local TABLE_TYPE = "table"
+	TABLE_TYPE = TABLE_TYPE -- Prevent folding.
+
+	local BUFFER_TYPE = CHECK_BUFFER_VALUE and "buffer"
+	BUFFER_TYPE = BUFFER_TYPE -- Prevent folding.
+
+	-- Iterate through the table to handle nested tables.
+	for k, v in tbl :: table do
+		local keyType = type(k)
+		local valueType = type(v)
+
+		local shouldCloneKey = keyType == TABLE_TYPE or (CHECK_BUFFER_VALUE and keyType == BUFFER_TYPE)
+		local shouldCloneValue = valueType == TABLE_TYPE or (CHECK_BUFFER_VALUE and valueType == BUFFER_TYPE)
+
+		if shouldCloneKey then
+			copy[k] = nil
+			k = valueMap[k] or deepCopy(k :: K, valueMap :: table)
+			copy[k] = if shouldCloneValue then valueMap[v] or deepCopy(v) else v
+		elseif shouldCloneValue then
+			copy[k] = valueMap[v] or deepCopy(v)
+		end
+	end
+
+	return copy :: table<K, V>
+end
+
+local function deepEqual<A, B>(a: any, b: any, visited: table?): boolean
 	if STRICT_MODE then
-		checkArgs("a", "any", a)
-		checkArgs("b", "any", b)
+		-- checkArgs("a", "any", a)
+		-- checkArgs("b", "any", b)
 	end
 
 	-- If they are physically the same or simple equal primitives, they are equal.
@@ -1815,6 +2449,78 @@ local function deepFreeze<K, V>(tbl: table<K, V>, layers: number?, visited: tabl
 	-- Freeze the top-level table after all its contents are frozen.
 	return table.freeze(tbl)
 end
+
+local function findMatch<K, V>(tbl: table<K, V>, filter: (K, V) -> boolean): K?
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		checkArgs("filter", "function", filter)
+	end
+
+	-- Iterate through each key-value pair in the table.
+	for k, v in tbl do
+		-- If the filter returns true for this key-value pair, return the key.
+		if filter(k, v) then
+			return k
+		end
+	end
+
+	return nil -- Return nil if no matching key is found.
+end
+
+local function every<K, V>(tbl: table<K, V>, filter: (K, V) -> boolean): boolean
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		checkArgs("filter", "function", filter)
+	end
+
+	-- Iterate through each key-value pair in the table.
+	for k, v in tbl do
+		-- If the filter returns false for any key-value pair, return false.
+		if not (filter(k, v) :: boolean) then
+			return false
+		end
+	end
+
+	return true -- Return true if all key-value pairs satisfy the filter.
+end
+
+local function some<K, V>(tbl: table<K, V>, filter: (K, V) -> boolean): boolean
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+		checkArgs("filter", "function", filter)
+	end
+
+	-- Iterate through each key-value pair in the table.
+	for k, v in tbl do
+		-- If the filter returns true for any key-value pair, return true.
+		if filter(k, v) then
+			return true
+		end
+	end
+
+	return false -- Return false if no key-value pair satisfies the filter.
+end
+
+local function toSet<K, V>(tbl: table<K, V>): table<K, boolean>
+	if STRICT_MODE then
+		checkArgs("tbl", "table", tbl)
+	end
+
+	local set: table<K, boolean> = {}
+
+	-- Iterate through each key-value pair in the table.
+	for k in tbl do
+		set[k] = true -- Add each key to the set with a value of true.
+	end
+
+	return set -- Return the resulting set.
+end
+
+--[=[
+==============================
+ 6. Conversion & Formatting
+==============================
+]=]
 
 local function serializeType(value: any, valueType: string): string
 	if valueType == "string" then
@@ -1935,53 +2641,32 @@ local function prettyPrint<K, V>(tbl: table<K, V>, indent: number?): string
 	return printTable(tbl, {0, "ROOT"} :: any, "ROOT")
 end
 
-local function isContiguousArray<T>(array: array<T>): boolean
+local function toCSV<T>(rows: array<array<T>>, delimiter: string?): string
 	if STRICT_MODE then
-		checkArgs("array", "table", array)
+		checkArgs("rows", "table", rows)
+		checkArgs("delimiter", "string", delimiter, true)
 	end
 
-	local length = #array
+	delimiter = delimiter or ","
+	local csvLines = table.create(#rows) :: { string }
 
-	-- An empty array is contiguous only if it has no non-numeric keys.
-	if length == 0 then return next(array) == nil end
-	-- If there's an element right after the '#' length, it's not contiguous.
-	if next(array, length) ~= nil then return false end
-
-	local lastIndex: number
-
-	-- `ipairs` stops at the first nil value.
-	for i, _ in ipairs(array) do
-		lastIndex = i + 0
-	end
-
-	-- If the last index found by ipairs matches the length, the array is contiguous.
-	return lastIndex == length
-end
-
-local function isSparseArray<T>(array: array<T>): boolean
-	if STRICT_MODE then
-		checkArgs("array", "table", array)
-	end
-
-	local nextIndex, exitIndex = 1, nil
-
-	for i, _ in next, array do
-		if i ~= nextIndex then
-			exitIndex = i
-			break
+	for _, row in rows do
+		local csvRow: { string } = {}
+		for _, value in row do
+			local valueType = typeof(value)
+			if valueType == "string" then
+				value = '"' .. string.gsub(value, '"', '""') .. '"'
+			elseif valueType == "number" or valueType == "boolean" then
+				value = tostring(value)
+			else
+				value = '"' .. tostring(value) .. '"'
+			end
+			table.insert(csvRow, value)
 		end
-		nextIndex = i + 1
+		table.insert(csvLines, table.concat(csvRow, delimiter))
 	end
 
-	if exitIndex == nil then return false end
-
-	for i, _ in next, array, exitIndex do
-		if type(i) ~= "number" or i // 1 ~= i or i < 1 then
-			return false -- Not an array
-		end
-	end
-
-	return true
+	return table.concat(csvLines, "\n")
 end
 
 --// Return \\--
@@ -2006,14 +2691,19 @@ local Library = {
 	]=]
 
 	mergeTables = mergeTables,
+	mergeTablesWith = mergeTablesWith,
 	accumulateTables = accumulateTables,
 	diffTables = diffTables,
 	syncTable = syncTable,
 	mapTable = mapTable,
-	filterTable = filtterTable,
+	filterTable = filterTable,
 	reduceTable = reduceTable,
-	groupBy = groupBy,
+	groupTableBy = groupTableBy,
+	tableToPairs = tableToPairs,
 	invertTable = invertTable,
+	tableIntersection = tableIntersection,
+	tableDifference = tableDifference,
+	removeAll = removeAll,
 
 	--[=[
 	==============================
@@ -2025,10 +2715,12 @@ local Library = {
 	setArraySize = setArraySize,
 	truncateArray = truncateArray,
 	concatArrays = concatArrays,
+	unionArrays = unionArrays,
 	flattenArray = flattenArray,
 	compactArray = compactArray,
 	fillArray = fillArray,
 	reverseArray = reverseArray,
+	rotateArray = rotateArray,
 	sliceArray = sliceArray,
 	shuffleArray = shuffleArray,
 	sampleArray = sampleArray,
@@ -2039,6 +2731,9 @@ local Library = {
 	findAndRemove = findAndRemove,
 	zipArray = zipArray,
 	unzipArray = unzipArray,
+	partitionArray = partitionArray,
+	partitionArrayBy = partitionArrayBy,
+	binarySearch = binarySearch,
 
 	--[=[
 	==============================
@@ -2050,6 +2745,14 @@ local Library = {
 	getValues = getValues,
 	isContiguousArray = isContiguousArray,
 	isSparseArray = isSparseArray,
+	isArray = isArray,
+	isEmpty = isEmpty,
+	hasKey = hasKey,
+	hasValue = hasValue,
+	countOccurences = countOccurences,
+	countKeysByType = countKeysByType,
+	countValuesByType = countValuesByType,
+	keysOfValue = keysOfValue,
 
 	--[=[
 	==============================
@@ -2063,6 +2766,7 @@ local Library = {
 	findMatch = findMatch,
 	every = every,
 	some = some,
+	toSet = toSet,
 
 	--[=[
 	==============================
@@ -2071,6 +2775,7 @@ local Library = {
 	]=]
 
 	prettyPrint = prettyPrint,
+	toCSV = toCSV,
 }
 
 for key, value in table :: table do
