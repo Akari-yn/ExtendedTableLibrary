@@ -203,7 +203,7 @@ type ExtendedTableLibrary = {
 
 		@return A new table with only the key-value pairs that match the predicate.
 	]=]
-	filterTable: <K, V, U>(tbl: table<K | U, V>, predicate: (K | U, V) -> boolean, preAllocate: boolean?) -> table<U, V>,
+	filterTable: <K, V>(tbl: table<K | U, V>, predicate: (K, V) -> boolean, preAllocate: boolean?) -> table<K, V>,
 
 	--[=[
 		ReduceTable
@@ -695,7 +695,7 @@ type ExtendedTableLibrary = {
 		@param valueType The type of values to count (e.g., "string", "number").
 		@return The number of values in the table that match the specified type.
 	]=]
-	countValuesByType: <K, V>(tbl: table<K, V>, value: V) -> number,
+	countValuesByType: <K, V>(tbl: table<K, V>, valueType: string) -> number,
 
 	--[=[
 		KeysOfValue
@@ -1251,7 +1251,7 @@ local function mapTable<K, V, U>(tbl: table<K, V>, callback: (K, V) -> U): table
 	return result
 end
 
-local function filterTable<K, V, U>(tbl: table<K | U, V>, predicate: (K | U, V) -> boolean, preAllocate: boolean?): table<U, V>
+local function filterTable<K, V>(tbl: table<K | U, V>, predicate: (K, V) -> boolean, preAllocate: boolean?): table<K, V>
 	if STRICT_MODE then
 		checkArgs("tbl", "table", tbl)
 		checkArgs("predicate", "function", predicate)
