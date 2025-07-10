@@ -92,9 +92,9 @@ local TestCases = {
 								48 -- nested table struct
 								+ (16 + 32) -- "d" key
 								+ 16 -- and value
-								))
+							))
 							+ 32 -- empty hash portion
-						,
+							,
 						Function = ExtendedTableLibrary.getTableMemorySize,
 					},
 				},
@@ -929,7 +929,7 @@ local TestCases = {
 							local tbl1 = { a = 1, b = 2 }
 							local tbl2 = { a = 1, c = 3 }
 							local success = pcall(ExtendedTableLibrary.tableDifference, tbl1, tbl2, true, true)
-
+							
 							assert(not success, "Should throw error when both matchValue and symmetric are true")
 						end,
 					},
@@ -998,6 +998,7 @@ local TestCases = {
 		Name = "Array Manipulation",
 
 		TestCases = {
+			-- extendArraySize
 			{
 				Name = "extendArraySize",
 				Function = function()
@@ -1012,6 +1013,7 @@ local TestCases = {
 				end,
 			},
 
+			-- setArraySize tests
 			{
 				Name = "setArraySize",
 
@@ -1043,6 +1045,7 @@ local TestCases = {
 				}
 			},
 
+			-- truncateArray tests
 			{
 				Name = "truncateArray",
 				TestCases = {
@@ -1174,13 +1177,13 @@ local TestCases = {
 							local arr2 = {2, 3, 4}
 							local arr3 = {3, 4, 5}
 							local result = ExtendedTableLibrary.unionArrays(arr1, arr2, arr3)
-
+							
 							-- Check that all unique elements are still present
 							local resultSet = {}
 							for _, v in result do
 								resultSet[v] = true
 							end
-
+							
 							assert(resultSet[1] and resultSet[2] and resultSet[3] and resultSet[4] and resultSet[5], "All unique elements should be present")
 							assert(#result == 5, "Should have 5 unique elements")
 						end,
@@ -1193,7 +1196,7 @@ local TestCases = {
 							local arr3 = {5, 6}
 							local result = ExtendedTableLibrary.unionArrays(arr1, arr2, arr3)
 							local expected = {1, 2, 3, 4, 5, 6}
-
+							
 							-- Check length and all elements present
 							assert(#result == 6, "Should have 6 elements")
 							local resultSet = {}
@@ -1212,7 +1215,7 @@ local TestCases = {
 							local arr2 = {}
 							local arr3 = {3, 4}
 							local result = ExtendedTableLibrary.unionArrays(arr1, arr2, arr3)
-
+							
 							assert(#result == 4, "Should have 4 elements")
 							local resultSet = {}
 							for _, v in result do
@@ -1226,7 +1229,7 @@ local TestCases = {
 						Function = function()
 							local arr1 = {1, 2, 2, 3, 3, 3}
 							local result = ExtendedTableLibrary.unionArrays(arr1)
-
+							
 							assert(#result == 3, "Should have 3 unique elements")
 							local resultSet = {}
 							for _, v in result do
@@ -1493,7 +1496,7 @@ local TestCases = {
 										end
 										return array
 									end
-
+									
 									-- Helper function to get expected compact result
 									local function getExpectedCompact(nilPositions)
 										local expected = {}
@@ -1511,13 +1514,13 @@ local TestCases = {
 										end
 										return expected
 									end
-
+									
 									-- Test with 0 nils (contiguous array)
 									local array0 = {`value1`, `value2`, `value3`, `value4`, `value5`, `value6`, `value7`, `value8`}
 									local result0 = ExtendedTableLibrary.compactArray(array0)
 									local expected0 = {`value1`, `value2`, `value3`, `value4`, `value5`, `value6`, `value7`, `value8`}
 									assert(deepEqual(result0, expected0), "compactArray failed for 0 nils")
-
+									
 									-- Test with 1 nil at each position
 									for nilPos = 1, 8 do
 										local array = createArrayWithNils({nilPos})
@@ -1525,7 +1528,7 @@ local TestCases = {
 										local expected = getExpectedCompact({nilPos})
 										assert(deepEqual(result, expected), `compactArray failed for 1 nil at position {nilPos}`)
 									end
-
+									
 									-- Test with 2 nils at various positions
 									for pos1 = 1, 7 do
 										for pos2 = pos1 + 1, 8 do
@@ -1535,7 +1538,7 @@ local TestCases = {
 											assert(deepEqual(result, expected), `compactArray failed for 2 nils at positions {pos1}, {pos2}`)
 										end
 									end
-
+									
 									-- Test with 3 nils at various positions (sampling key cases)
 									local testCases3 = {
 										{1, 2, 3}, -- beginning
@@ -1550,7 +1553,7 @@ local TestCases = {
 										local expected = getExpectedCompact(nilPositions)
 										assert(deepEqual(result, expected), `compactArray failed for 3 nils at positions {table.concat(nilPositions, ", ")}`)
 									end
-
+									
 									-- Test with 4 nils at various positions (sampling key cases)
 									local testCases4 = {
 										{1, 2, 3, 4}, -- beginning
@@ -1565,7 +1568,7 @@ local TestCases = {
 										local expected = getExpectedCompact(nilPositions)
 										assert(deepEqual(result, expected), `compactArray failed for 4 nils at positions {table.concat(nilPositions, ", ")}`)
 									end
-
+									
 									-- Test with 5 nils (sampling key cases)
 									local testCases5 = {
 										{1, 2, 3, 4, 5}, -- beginning
@@ -1579,7 +1582,7 @@ local TestCases = {
 										local expected = getExpectedCompact(nilPositions)
 										assert(deepEqual(result, expected), `compactArray failed for 5 nils at positions {table.concat(nilPositions, ", ")}`)
 									end
-
+									
 									-- Test with 6 nils (sampling key cases)
 									local testCases6 = {
 										{1, 2, 3, 4, 5, 6}, -- beginning
@@ -1592,7 +1595,7 @@ local TestCases = {
 										local expected = getExpectedCompact(nilPositions)
 										assert(deepEqual(result, expected), `compactArray failed for 6 nils at positions {table.concat(nilPositions, ", ")}`)
 									end
-
+									
 									-- Test with 7 nils (each position can be the non-nil one)
 									for nonNilPos = 1, 8 do
 										local nilPositions = {}
@@ -1606,7 +1609,7 @@ local TestCases = {
 										local expected = {`value{nonNilPos}`}
 										assert(deepEqual(result, expected), `compactArray failed for 7 nils, non-nil at position {nonNilPos}`)
 									end
-
+									
 									-- Test with 8 nils (all nil)
 									local array8 = {}
 									for i = 1, 8 do
@@ -1615,11 +1618,11 @@ local TestCases = {
 									local result8 = ExtendedTableLibrary.compactArray(array8)
 									local expected8 = {}
 									assert(deepEqual(result8, expected8), "compactArray failed for 8 nils (all nil)")
-
+									
 									print("All compactArray state tests passed!")
 								end,
 							},
-
+							
 							{
 								Name = "compactArray with sparse arrays (hash portion)",
 								Function = function()
@@ -1636,19 +1639,19 @@ local TestCases = {
 										{indices = {1}, values = {"a"}},
 										{indices = {8}, values = {"h"}},
 									}
-
+									
 									for _, testCase in testCases do
 										local sparseArray = {}
 										for i, index in testCase.indices do
 											sparseArray[index] = testCase.values[i]
 										end
-
+										
 										local result = ExtendedTableLibrary.compactArray(sparseArray)
 										assert(deepEqual(result, testCase.values), `compactArray failed for sparse array with indices {table.concat(testCase.indices, ", ")}`)
 									end
 								end,
 							},
-
+							
 							{
 								Name = "compactArray with isArray=true flag",
 								Function = function()
@@ -1661,7 +1664,7 @@ local TestCases = {
 										{size = 8, nils = {1, 2, 3, 4}, expected = {"e", "f", "g", "h"}},
 										{size = 8, nils = {5, 6, 7, 8}, expected = {"a", "b", "c", "d"}},
 									}
-
+									
 									for _, testCase in testCases do
 										local array = table.create(testCase.size)
 										local valueIndex = 1
@@ -1670,14 +1673,14 @@ local TestCases = {
 											array[i] = string.char(96 + i) -- a, b, c, etc.
 											valueIndex += 1
 										end
-
+										
 										assert(ExtendedTableLibrary.getAllocatedArraySize(array) == testCase.size, `Array should be allocated with size {testCase.size}`)
 										local result = ExtendedTableLibrary.compactArray(array, false, true)
 										assert(deepEqual(result, testCase.expected), `compactArray with isArray=true failed for nils at {table.concat(testCase.nils, ", ")}`)
 									end
 								end,
 							},
-
+							
 							{
 								Name = "compactArray with allocateExactSize=true",
 								Function = function()
@@ -1689,7 +1692,7 @@ local TestCases = {
 										{input = {nil, nil, nil, nil, nil, nil, nil, "h"}, expectedSize = 1},
 										{input = {}, expectedSize = 0},
 									}
-
+									
 									for _, testCase in testCases do
 										local result = ExtendedTableLibrary.compactArray(testCase.input, true)
 										local actualSize = ExtendedTableLibrary.getAllocatedArraySize(result)
@@ -1697,17 +1700,17 @@ local TestCases = {
 									end
 								end,
 							},
-
+							
 							{
 								Name = "compactArray edge cases",
 								Function = function()
 									-- Test various edge cases
-
+									
 									-- Empty array
 									local empty = {}
 									local resultEmpty = ExtendedTableLibrary.compactArray(empty)
 									assert(deepEqual(resultEmpty, {}), "compactArray failed for empty array")
-
+									
 									-- Single element at various positions
 									for pos = 1, 8 do
 										local singleArray = {}
@@ -1715,12 +1718,12 @@ local TestCases = {
 										local result = ExtendedTableLibrary.compactArray(singleArray)
 										assert(deepEqual(result, {`value{pos}`}), `compactArray failed for single element at position {pos}`)
 									end
-
+									
 									-- All elements at beginning
 									local beginArray = {"a", "b", "c"}
 									local resultBegin = ExtendedTableLibrary.compactArray(beginArray)
 									assert(deepEqual(resultBegin, {"a", "b", "c"}), "compactArray failed for elements at beginning")
-
+									
 									-- All elements at end
 									local endArray = {}
 									endArray[6] = "f"
@@ -1728,7 +1731,7 @@ local TestCases = {
 									endArray[8] = "h"
 									local resultEnd = ExtendedTableLibrary.compactArray(endArray)
 									assert(deepEqual(resultEnd, {"f", "g", "h"}), "compactArray failed for elements at end")
-
+									
 									-- Alternating pattern
 									local altArray = {}
 									altArray[1] = "a"
@@ -2149,18 +2152,18 @@ local TestCases = {
 							local array = {1, 2, 3, 4, 5}
 							local original = {1, 2, 3, 4, 5}
 							ExtendedTableLibrary.shuffleArray(array)
-
+							
 							-- Check that all original elements are still present
 							local originalSet = {}
 							for _, v in original do
 								originalSet[v] = true
 							end
-
+							
 							local shuffledSet = {}
 							for _, v in array do
 								shuffledSet[v] = true
 							end
-
+							
 							assert(deepEqual(originalSet, shuffledSet), "Shuffle should preserve all elements")
 							assert(#array == #original, "Shuffle should preserve array length")
 						end,
@@ -2188,7 +2191,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2}
 							ExtendedTableLibrary.shuffleArray(array)
-
+							
 							-- Should contain both elements
 							local hasOne = false
 							local hasTwo = false
@@ -2196,7 +2199,7 @@ local TestCases = {
 								if v == 1 then hasOne = true end
 								if v == 2 then hasTwo = true end
 							end
-
+							
 							assert(hasOne and hasTwo, "Both elements should be present after shuffle")
 							assert(#array == 2, "Array length should remain 2")
 						end,
@@ -2206,13 +2209,13 @@ local TestCases = {
 						Function = function()
 							local array = {1, 1, 2, 2, 3}
 							ExtendedTableLibrary.shuffleArray(array)
-
+							
 							-- Count occurrences
 							local counts = {}
 							for _, v in array do
 								counts[v] = (counts[v] or 0) + 1
 							end
-
+							
 							assert(counts[1] == 2, "Should have 2 ones")
 							assert(counts[2] == 2, "Should have 2 twos")
 							assert(counts[3] == 1, "Should have 1 three")
@@ -2230,19 +2233,19 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.sampleArray(array, 3, false)
-
+							
 							assert(#result == 3, "Should sample exactly 3 elements")
-
+							
 							-- Check that all sampled elements are from original array
 							local originalSet = {}
 							for _, v in array do
 								originalSet[v] = true
 							end
-
+							
 							for _, v in result do
 								assert(originalSet[v], `Sampled element {v} should be from original array`)
 							end
-
+							
 							-- Check no duplicates
 							local sampledSet = {}
 							for _, v in result do
@@ -2256,9 +2259,9 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2}
 							local result = ExtendedTableLibrary.sampleArray(array, 5, true)
-
+							
 							assert(#result == 5, "Should sample exactly 5 elements")
-
+							
 							-- All elements should be from original array
 							for _, v in result do
 								assert(v == 1 or v == 2, `Sampled element {v} should be 1 or 2`)
@@ -2270,20 +2273,20 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3}
 							local result = ExtendedTableLibrary.sampleArray(array, 3, false)
-
+							
 							assert(#result == 3, "Should sample exactly 3 elements")
-
+							
 							-- Should contain all elements (in some order)
 							local originalSet = {}
 							for _, v in array do
 								originalSet[v] = true
 							end
-
+							
 							local sampledSet = {}
 							for _, v in result do
 								sampledSet[v] = true
 							end
-
+							
 							assert(deepEqual(originalSet, sampledSet), "Should sample all unique elements")
 						end,
 					},
@@ -2301,15 +2304,15 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.sampleArray(array, 1, false)
-
+							
 							assert(#result == 1, "Should sample exactly 1 element")
-
+							
 							-- Element should be from original array
 							local originalSet = {}
 							for _, v in array do
 								originalSet[v] = true
 							end
-
+							
 							assert(originalSet[result[1]], "Sampled element should be from original array")
 						end,
 					},
@@ -2334,7 +2337,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.sampleValue(array)
-
+							
 							-- Result should be one of the array elements
 							local found = false
 							for _, v in array do
@@ -2351,7 +2354,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.sampleValue(array, 2, 4)
-
+							
 							-- Result should be from indices 2-4 (values 2, 3, 4)
 							assert(result >= 2 and result <= 4, `Sampled value {result} should be between 2 and 4`)
 						end,
@@ -2361,7 +2364,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.sampleValue(array, 3)
-
+							
 							-- Result should be from index 3 to end (values 3, 4, 5)
 							assert(result >= 3 and result <= 5, `Sampled value {result} should be between 3 and 5`)
 						end,
@@ -2371,7 +2374,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.sampleValue(array, nil, 3)
-
+							
 							-- Result should be from start to index 3 (values 1, 2, 3)
 							assert(result >= 1 and result <= 3, `Sampled value {result} should be between 1 and 3`)
 						end,
@@ -2381,7 +2384,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.sampleValue(array, 3, 3)
-
+							
 							-- Should return exactly the element at index 3
 							assert(result == 3, `Sampled value should be 3, got {result}`)
 						end,
@@ -2391,7 +2394,7 @@ local TestCases = {
 						Function = function()
 							local array = {"only"}
 							local result = ExtendedTableLibrary.sampleValue(array)
-
+							
 							assert(result == "only", `Sampled value should be "only", got {result}`)
 						end,
 					},
@@ -2400,7 +2403,7 @@ local TestCases = {
 						Function = function()
 							local array = {"apple", "banana", "cherry"}
 							local result = ExtendedTableLibrary.sampleValue(array)
-
+							
 							-- Result should be one of the string values
 							local validValues = {apple = true, banana = true, cherry = true}
 							assert(validValues[result], `Sampled value {result} should be one of the array strings`)
@@ -2429,17 +2432,17 @@ local TestCases = {
 							local result = ExtendedTableLibrary.removeDuplicate(array, function(value)
 								return string.sub(value, 1, 1) -- Group by first letter
 							end)
-
+							
 							-- Should keep first occurrence of each starting letter
 							assert(#result == 3, "Should have 3 unique starting letters")
-
+							
 							-- Check that we have one word starting with 'a', 'b', and 'c'
 							local startingLetters = {}
 							for _, word in result do
 								local firstLetter = string.sub(word, 1, 1)
 								startingLetters[firstLetter] = (startingLetters[firstLetter] or 0) + 1
 							end
-
+							
 							assert(startingLetters.a == 1, "Should have exactly 1 word starting with 'a'")
 							assert(startingLetters.b == 1, "Should have exactly 1 word starting with 'b'")
 							assert(startingLetters.c == 1, "Should have exactly 1 word starting with 'c'")
@@ -2494,10 +2497,10 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							ExtendedTableLibrary.swapRemove(array, 3)
-
+							
 							assert(#array == 4, "Array length should be reduced by 1")
 							assert(array[3] == 5, "Element at index 3 should be the last element (5)")
-
+							
 							-- Check that element 3 is no longer in the array
 							local hasThree = false
 							for _, v in array do
@@ -2520,7 +2523,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							ExtendedTableLibrary.swapRemove(array, 1)
-
+							
 							assert(#array == 4, "Array length should be reduced by 1")
 							assert(array[1] == 5, "First element should be replaced with last element")
 						end,
@@ -2555,7 +2558,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.getAndRemove(array, 3, false)
-
+							
 							assert(result == 3, "Should return the removed element")
 							local expected = {1, 2, 4, 5}
 							assert(deepEqual(array, expected), "Array should have element removed and others shifted")
@@ -2566,7 +2569,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.getAndRemove(array, 3, true)
-
+							
 							assert(result == 3, "Should return the removed element")
 							assert(#array == 4, "Array length should be reduced by 1")
 							assert(array[3] == 5, "Element at index 3 should be the last element")
@@ -2577,7 +2580,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.getAndRemove(array, 1)
-
+							
 							assert(result == 1, "Should return the first element")
 							local expected = {2, 3, 4, 5}
 							assert(deepEqual(array, expected), "Array should have first element removed")
@@ -2588,7 +2591,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.getAndRemove(array, 5)
-
+							
 							assert(result == 5, "Should return the last element")
 							local expected = {1, 2, 3, 4}
 							assert(deepEqual(array, expected), "Array should have last element removed")
@@ -2599,7 +2602,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3}
 							local result = ExtendedTableLibrary.getAndRemove(array, 5)
-
+							
 							assert(result == nil, "Should return nil for out of bounds index")
 							local expected = {1, 2, 3}
 							assert(deepEqual(array, expected), "Array should remain unchanged")
@@ -2610,7 +2613,7 @@ local TestCases = {
 						Function = function()
 							local array = {"only"}
 							local result = ExtendedTableLibrary.getAndRemove(array, 1)
-
+							
 							assert(result == "only", "Should return the only element")
 							local expected = {}
 							assert(deepEqual(array, expected), "Array should become empty")
@@ -2628,7 +2631,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.findAndRemove(array, 3)
-
+							
 							assert(result == true, "Should return true when value is found and removed")
 							local expected = {1, 2, 4, 5}
 							assert(deepEqual(array, expected), "Array should have value removed")
@@ -2639,10 +2642,10 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.findAndRemove(array, 3, true)
-
+							
 							assert(result == true, "Should return true when value is found and removed")
 							assert(#array == 4, "Array length should be reduced by 1")
-
+							
 							-- Check that 3 is no longer in the array
 							local hasThree = false
 							for _, v in array do
@@ -2657,7 +2660,7 @@ local TestCases = {
 							local array = {1, 2, 3, 4, 5}
 							local originalArray = {1, 2, 3, 4, 5}
 							local result = ExtendedTableLibrary.findAndRemove(array, 10)
-
+							
 							assert(result == false, "Should return false when value is not found")
 							assert(deepEqual(array, originalArray), "Array should remain unchanged")
 						end,
@@ -2667,7 +2670,7 @@ local TestCases = {
 						Function = function()
 							local array = {1, 2, 3, 2, 4}
 							local result = ExtendedTableLibrary.findAndRemove(array, 2)
-
+							
 							assert(result == true, "Should return true when value is found")
 							local expected = {1, 3, 2, 4}
 							assert(deepEqual(array, expected), "Should remove first occurrence only")
@@ -2678,7 +2681,7 @@ local TestCases = {
 						Function = function()
 							local array = {"target"}
 							local result = ExtendedTableLibrary.findAndRemove(array, "target")
-
+							
 							assert(result == true, "Should return true when value is found")
 							local expected = {}
 							assert(deepEqual(array, expected), "Array should become empty")
@@ -2689,7 +2692,7 @@ local TestCases = {
 						Function = function()
 							local array = {}
 							local result = ExtendedTableLibrary.findAndRemove(array, "anything")
-
+							
 							assert(result == false, "Should return false for empty array")
 							local expected = {}
 							assert(deepEqual(array, expected), "Empty array should remain empty")
@@ -2700,7 +2703,7 @@ local TestCases = {
 						Function = function()
 							local array = {"apple", "banana", "cherry", "date"}
 							local result = ExtendedTableLibrary.findAndRemove(array, "banana")
-
+							
 							assert(result == true, "Should return true when string is found")
 							local expected = {"apple", "cherry", "date"}
 							assert(deepEqual(array, expected), "String should be removed from array")
@@ -2832,11 +2835,11 @@ local TestCases = {
 							local arr1 = {1, 2, 3}
 							local arr2 = {"a", "b", "c"}
 							local arr3 = {true, false, true}
-
+							
 							local zipped = ExtendedTableLibrary.zipArray(arr1, arr2, arr3)
 							local unzipped = ExtendedTableLibrary.unzipArray(zipped)
 							local expected = {arr1, arr2, arr3}
-
+							
 							assert(deepEqual(unzipped, expected), "Zip-unzip roundtrip failed")
 						end,
 					},
@@ -3094,7 +3097,7 @@ local TestCases = {
 								elseif a > b then return 1
 								else return 0 end
 							end
-
+							
 							assert(ExtendedTableLibrary.binarySearch(sortedArray, 7, numericComparator) == 4, "Should find 7 at index 4 with custom comparator")
 							assert(ExtendedTableLibrary.binarySearch(sortedArray, 2, numericComparator) == nil, "Should not find 2 with custom comparator")
 						end,
@@ -3108,7 +3111,7 @@ local TestCases = {
 								elseif a < b then return 1
 								else return 0 end
 							end
-
+							
 							assert(ExtendedTableLibrary.binarySearch(reverseSortedArray, 7, reverseComparator) == 4, "Should find 7 at index 4 in reverse-sorted array")
 							assert(ExtendedTableLibrary.binarySearch(reverseSortedArray, 13, reverseComparator) == 1, "Should find 13 at index 1 in reverse-sorted array")
 							assert(ExtendedTableLibrary.binarySearch(reverseSortedArray, 1, reverseComparator) == 7, "Should find 1 at index 7 in reverse-sorted array")
@@ -3126,7 +3129,7 @@ local TestCases = {
 								elseif lowerA > lowerB then return 1
 								else return 0 end
 							end
-
+							
 							assert(ExtendedTableLibrary.binarySearch(mixedCaseStrings, "cherry", caseInsensitiveComparator) == 3, "Should find 'cherry' matching 'Cherry' case-insensitively")
 							assert(ExtendedTableLibrary.binarySearch(mixedCaseStrings, "BANANA", caseInsensitiveComparator) == 2, "Should find 'BANANA' matching 'Banana' case-insensitively")
 							assert(ExtendedTableLibrary.binarySearch(mixedCaseStrings, "grape", caseInsensitiveComparator) == nil, "Should not find 'grape' case-insensitively")
@@ -3139,7 +3142,7 @@ local TestCases = {
 							for i = 1, 1000 do
 								largeArray[i] = i * 2  -- Even numbers: 2, 4, 6, ..., 2000
 							end
-
+							
 							assert(ExtendedTableLibrary.binarySearch(largeArray, 100) == 50, "Should find 100 at index 50 in large array")
 							assert(ExtendedTableLibrary.binarySearch(largeArray, 2) == 1, "Should find 2 at index 1 in large array")
 							assert(ExtendedTableLibrary.binarySearch(largeArray, 2000) == 1000, "Should find 2000 at index 1000 in large array")
@@ -3157,13 +3160,13 @@ local TestCases = {
 								{name = "Dave", age = 40},
 								{name = "Eve", age = 45}
 							}
-
+							
 							local ageComparator = function(person, targetAge)
 								if person.age < targetAge then return -1
 								elseif person.age > targetAge then return 1
 								else return 0 end
 							end
-
+							
 							assert(ExtendedTableLibrary.binarySearch(people, 35, ageComparator) == 3, "Should find person with age 35 at index 3")
 							assert(ExtendedTableLibrary.binarySearch(people, 25, ageComparator) == 1, "Should find person with age 25 at index 1")
 							assert(ExtendedTableLibrary.binarySearch(people, 45, ageComparator) == 5, "Should find person with age 45 at index 5")
@@ -3191,7 +3194,6 @@ local TestCases = {
 		Name = "Inspection & Metadata",
 
 		TestCases = {
-
 			-- getKeys tests
 			{
 				Name = "getKeys",
@@ -3201,7 +3203,7 @@ local TestCases = {
 						Function = function()
 							local hashTable = {a = 1, b = 2, c = 3}
 							local keys = ExtendedTableLibrary.getKeys(hashTable)
-
+							
 							-- Sort the keys for consistent comparison since iteration order is not guaranteed
 							ExtendedTableLibrary.sort(keys)
 							assert(deepEqual(keys, {"a", "b", "c"}), "Should return all string keys")
@@ -3212,7 +3214,7 @@ local TestCases = {
 						Function = function()
 							local arrayTable = {10, 20, 30, 40}
 							local keys = ExtendedTableLibrary.getKeys(arrayTable)
-
+							
 							-- Sort the keys for consistent comparison
 							ExtendedTableLibrary.sort(keys)
 							assert(deepEqual(keys, {1, 2, 3, 4}), "Should return numeric indices")
@@ -3223,7 +3225,7 @@ local TestCases = {
 						Function = function()
 							local mixedTable = {10, 20, a = "hello", b = "world", [5] = 50}
 							local keys = ExtendedTableLibrary.getKeys(mixedTable)
-
+							
 							-- Sort the keys for consistent comparison
 							ExtendedTableLibrary.sort(keys, function(a, b)
 								if type(a) == type(b) then
@@ -3248,7 +3250,7 @@ local TestCases = {
 						Function = function()
 							local numericKeyTable = {[100] = "a", [200] = "b", [50] = "c"}
 							local keys = ExtendedTableLibrary.getKeys(numericKeyTable)
-
+							
 							ExtendedTableLibrary.sort(keys)
 							assert(deepEqual(keys, {50, 100, 200}), "Should return all numeric keys")
 						end,
@@ -3264,10 +3266,10 @@ local TestCases = {
 								[obj] = "object key"
 							}
 							local keys = ExtendedTableLibrary.getKeys(variedTable)
-
+							
 							-- Check that we have the right number of keys
 							assert(#keys == 4, "Should have 4 keys")
-
+							
 							-- Check that all expected keys are present
 							local hasNumber, hasString, hasBoolean, hasObject = false, false, false, false
 							for _, key in keys do
@@ -3277,7 +3279,7 @@ local TestCases = {
 								elseif key == obj then hasObject = true
 								end
 							end
-
+							
 							assert(hasNumber and hasString and hasBoolean and hasObject, "Should contain all key types")
 						end,
 					},
@@ -3286,7 +3288,7 @@ local TestCases = {
 						Function = function()
 							local orderedArray = {100, 200, 300}
 							local keys = ExtendedTableLibrary.getKeys(orderedArray)
-
+							
 							-- Array keys should maintain order 1, 2, 3
 							assert(deepEqual(keys, {1, 2, 3}), "Should preserve array index order")
 						end,
@@ -3303,7 +3305,7 @@ local TestCases = {
 						Function = function()
 							local hashTable = {a = 10, b = 20, c = 30}
 							local values = ExtendedTableLibrary.getValues(hashTable)
-
+							
 							-- Sort the values for consistent comparison since iteration order is not guaranteed
 							ExtendedTableLibrary.sort(values)
 							assert(deepEqual(values, {10, 20, 30}), "Should return all values")
@@ -3314,7 +3316,7 @@ local TestCases = {
 						Function = function()
 							local arrayTable = {"apple", "banana", "cherry"}
 							local values = ExtendedTableLibrary.getValues(arrayTable)
-
+							
 							assert(deepEqual(values, {"apple", "banana", "cherry"}), "Should return array values in order")
 						end,
 					},
@@ -3323,10 +3325,10 @@ local TestCases = {
 						Function = function()
 							local mixedTable = {"first", "second", x = "extra", y = "more"}
 							local values = ExtendedTableLibrary.getValues(mixedTable)
-
+							
 							-- Check that we have the right number of values
 							assert(#values == 4, "Should have 4 values")
-
+							
 							-- Check that all expected values are present
 							local hasFirst, hasSecond, hasExtra, hasMore = false, false, false, false
 							for _, value in values do
@@ -3336,7 +3338,7 @@ local TestCases = {
 								elseif value == "more" then hasMore = true
 								end
 							end
-
+							
 							assert(hasFirst and hasSecond and hasExtra and hasMore, "Should contain all values")
 						end,
 					},
@@ -3353,7 +3355,7 @@ local TestCases = {
 						Function = function()
 							local duplicateTable = {a = 100, b = 200, c = 100, d = 200}
 							local values = ExtendedTableLibrary.getValues(duplicateTable)
-
+							
 							-- Sort for consistent comparison
 							ExtendedTableLibrary.sort(values)
 							assert(deepEqual(values, {100, 100, 200, 200}), "Should return all values including duplicates")
@@ -3371,10 +3373,10 @@ local TestCases = {
 								e = nil  -- nil values won't be included
 							}
 							local values = ExtendedTableLibrary.getValues(variedTable)
-
+							
 							-- Check that we have the right number of values (excluding nil)
 							assert(#values == 4, "Should have 4 values (nil excluded)")
-
+							
 							-- Check that all expected values are present
 							local hasNumber, hasString, hasBoolean, hasObject = false, false, false, false
 							for _, value in values do
@@ -3384,7 +3386,7 @@ local TestCases = {
 								elseif value == obj then hasObject = true
 								end
 							end
-
+							
 							assert(hasNumber and hasString and hasBoolean and hasObject, "Should contain all value types")
 						end,
 					},
@@ -3393,7 +3395,7 @@ local TestCases = {
 						Function = function()
 							local orderedArray = {"first", "second", "third"}
 							local values = ExtendedTableLibrary.getValues(orderedArray)
-
+							
 							-- Array values should maintain order
 							assert(deepEqual(values, {"first", "second", "third"}), "Should preserve array value order")
 						end,
@@ -3407,10 +3409,10 @@ local TestCases = {
 								c = {z = 3}
 							}
 							local values = ExtendedTableLibrary.getValues(nestedTable)
-
+							
 							-- Check that we have the right number of nested tables
 							assert(#values == 3, "Should have 3 nested table values")
-
+							
 							-- Verify that all values are tables
 							for _, value in values do
 								assert(type(value) == "table", "All values should be tables")
@@ -4321,7 +4323,7 @@ local TestCases = {
 						Function = function()
 							local table = {a = 1, b = 2, c = 1, d = 3}
 							local result = ExtendedTableLibrary.keysOfValue(table, 1)
-
+							
 							-- Sort for consistent comparison
 							ExtendedTableLibrary.sort(result)
 							assert(deepEqual(result, {"a", "c"}), "Should find all keys for value 1")
@@ -4348,7 +4350,7 @@ local TestCases = {
 						Function = function()
 							local table = {"apple", "banana", "apple", "cherry", "apple"}
 							local result = ExtendedTableLibrary.keysOfValue(table, "apple")
-
+							
 							-- Sort for consistent comparison
 							ExtendedTableLibrary.sort(result)
 							assert(deepEqual(result, {1, 3, 5}), "Should find all array indices for value")
@@ -4359,7 +4361,7 @@ local TestCases = {
 						Function = function()
 							local table = {a = "test", b = "hello", c = "test", d = "world"}
 							local result = ExtendedTableLibrary.keysOfValue(table, "test")
-
+							
 							-- Sort for consistent comparison
 							ExtendedTableLibrary.sort(result)
 							assert(deepEqual(result, {"a", "c"}), "Should find all keys for string value")
@@ -4371,11 +4373,11 @@ local TestCases = {
 							local table = {a = true, b = false, c = true, d = 1, e = false}
 							local trueKeys = ExtendedTableLibrary.keysOfValue(table, true)
 							local falseKeys = ExtendedTableLibrary.keysOfValue(table, false)
-
+							
 							-- Sort for consistent comparison
 							ExtendedTableLibrary.sort(trueKeys)
 							ExtendedTableLibrary.sort(falseKeys)
-
+							
 							assert(deepEqual(trueKeys, {"a", "c"}), "Should find all keys for true value")
 							assert(deepEqual(falseKeys, {"b", "e"}), "Should find all keys for false value")
 						end,
@@ -4386,7 +4388,7 @@ local TestCases = {
 							local sharedTable = {x = 1}
 							local table = {a = sharedTable, b = {y = 2}, c = sharedTable}
 							local result = ExtendedTableLibrary.keysOfValue(table, sharedTable)
-
+							
 							-- Sort for consistent comparison
 							ExtendedTableLibrary.sort(result)
 							assert(deepEqual(result, {"a", "c"}), "Should find all keys for table value")
@@ -4405,7 +4407,7 @@ local TestCases = {
 						Function = function()
 							local table = {a = 0, b = 1, c = 0, d = false}
 							local result = ExtendedTableLibrary.keysOfValue(table, 0)
-
+							
 							-- Sort for consistent comparison
 							ExtendedTableLibrary.sort(result)
 							assert(deepEqual(result, {"a", "c"}), "Should find keys for zero value (not false)")
@@ -4420,7 +4422,7 @@ local TestCases = {
 								[true] = "test",      -- boolean key
 							}
 							local result = ExtendedTableLibrary.keysOfValue(table, "test")
-
+							
 							-- Sort with custom comparator for mixed types
 							ExtendedTableLibrary.sort(result, function(a, b)
 								if type(a) == type(b) then
@@ -4429,7 +4431,7 @@ local TestCases = {
 									return type(a) < type(b)
 								end
 							end)
-
+							
 							assert(deepEqual(result, {true, 1, "a"}), "Should find all keys regardless of key type")
 						end,
 					},
@@ -4451,10 +4453,10 @@ local TestCases = {
 								[true] = "found"
 							}
 							local result = ExtendedTableLibrary.keysOfValue(table, "found")
-
+							
 							-- Check that we have the right number of keys
 							assert(#result == 4, "Should find 4 keys")
-
+							
 							-- Check that original key types are preserved
 							local hasNumber, hasFloat, hasString, hasBoolean = false, false, false, false
 							for _, key in result do
@@ -4464,7 +4466,7 @@ local TestCases = {
 								elseif key == true then hasBoolean = true
 								end
 							end
-
+							
 							assert(hasNumber and hasFloat and hasString and hasBoolean, "Should preserve all key types")
 						end,
 					},
@@ -4486,10 +4488,10 @@ local TestCases = {
 						Function = function()
 							local original = {a = 1, b = 2, c = 3}
 							local copy = ExtendedTableLibrary.deepCopy(original)
-
+							
 							assert(deepEqual(copy, original), "Copy should be equal to original")
 							assert(copy ~= original, "Copy should be a different table reference")
-
+							
 							-- Modify copy to ensure independence
 							copy.a = 999
 							assert(original.a == 1, "Original should remain unchanged when copy is modified")
@@ -4509,12 +4511,12 @@ local TestCases = {
 								c = 3
 							}
 							local copy = ExtendedTableLibrary.deepCopy(original)
-
+							
 							assert(deepEqual(copy, original), "Copy should be equal to original")
 							assert(copy ~= original, "Copy should be a different table reference")
 							assert(copy.b ~= original.b, "Nested table should be a different reference")
 							assert(copy.b.y ~= original.b.y, "Deeply nested table should be a different reference")
-
+							
 							-- Modify nested values to ensure independence
 							copy.b.x = 999
 							copy.b.y.z = 999
@@ -4527,12 +4529,12 @@ local TestCases = {
 						Function = function()
 							local original = {1, 2, {3, 4, {5, 6}}}
 							local copy = ExtendedTableLibrary.deepCopy(original)
-
+							
 							assert(deepEqual(copy, original), "Array copy should be equal to original")
 							assert(copy ~= original, "Array copy should be a different reference")
 							assert(copy[3] ~= original[3], "Nested array should be a different reference")
 							assert(copy[3][3] ~= original[3][3], "Deeply nested array should be a different reference")
-
+							
 							-- Modify nested array to ensure independence
 							copy[3][1] = 999
 							copy[3][3][1] = 999
@@ -4545,7 +4547,7 @@ local TestCases = {
 						Function = function()
 							local original = {}
 							local copy = ExtendedTableLibrary.deepCopy(original)
-
+							
 							assert(deepEqual(copy, original), "Empty table copy should be equal to original")
 							assert(copy ~= original, "Empty table copy should be a different reference")
 						end,
@@ -4563,11 +4565,11 @@ local TestCases = {
 								}
 							}
 							local copy = ExtendedTableLibrary.deepCopy(original)
-
+							
 							assert(deepEqual(copy, original), "Mixed key table copy should be equal to original")
 							assert(copy ~= original, "Copy should be a different reference")
 							assert(copy.nested ~= original.nested, "Nested table should be a different reference")
-
+							
 							-- Verify all key types are preserved
 							assert(copy[1] == "number key", "Number key should be preserved")
 							assert(copy["string"] == "string key", "String key should be preserved")
@@ -4579,9 +4581,9 @@ local TestCases = {
 						Function = function()
 							local original = {a = 1, b = 2}
 							original.self = original -- Create circular reference
-
+							
 							local copy = ExtendedTableLibrary.deepCopy(original)
-
+							
 							assert(copy.a == 1, "Simple values should be copied")
 							assert(copy.b == 2, "Simple values should be copied")
 							assert(copy.self == copy, "Circular reference should point to copy, not original")
@@ -4597,13 +4599,13 @@ local TestCases = {
 								b = shared,
 								c = {nested = shared}
 							}
-
+							
 							local copy = ExtendedTableLibrary.deepCopy(original)
-
+							
 							assert(copy.a == copy.b, "Multiple references should point to same copy")
 							assert(copy.a == copy.c.nested, "All references should point to same copy")
 							assert(copy.a ~= original.a, "Copy should be different from original")
-
+							
 							-- Modify shared reference to ensure proper copying
 							copy.a.x = 999
 							assert(copy.b.x == 999, "All references in copy should reflect changes")
@@ -4626,9 +4628,9 @@ local TestCases = {
 								inf = math.huge,
 								negInf = -math.huge
 							}
-
+							
 							local copy = ExtendedTableLibrary.deepCopy(original)
-
+							
 							assert(copy.num == 42, "Number should be copied")
 							assert(copy.str == "hello", "String should be copied")
 							assert(copy.bool == true, "Boolean should be copied")
@@ -4645,7 +4647,7 @@ local TestCases = {
 							local mt = {__index = function() return "default" end}
 							local original = setmetatable({a = 1}, mt)
 							local copy = ExtendedTableLibrary.deepCopy(original)
-
+							
 							assert(copy.a == 1, "Value should be copied")
 							assert(getmetatable(copy) == mt, "Metatable should be preserved")
 							assert(copy.nonexistent == "default", "Metatable should function correctly")
@@ -4870,7 +4872,7 @@ local TestCases = {
 							local a = {f = func, t = thread}
 							local b = {f = func, t = thread}
 							assert(ExtendedTableLibrary.deepEqual(a, b) == true, "Tables with same function/thread references should be equal")
-
+							
 							local differentFunc = function() return "test" end
 							local c = {f = differentFunc, t = thread}
 							assert(ExtendedTableLibrary.deepEqual(a, c) == false, "Tables with different function references should not be equal")
@@ -4888,15 +4890,15 @@ local TestCases = {
 						Function = function()
 							local tbl = {a = 1, b = 2, c = 3}
 							local frozen = ExtendedTableLibrary.deepFreeze(tbl)
-
+							
 							assert(frozen == tbl, "Should return the same table reference")
-
+							
 							-- Test that table is frozen
 							local success = pcall(function()
 								tbl.a = 999
 							end)
 							assert(not success, "Should not be able to modify frozen table")
-
+							
 							success = pcall(function()
 								tbl.d = "new"
 							end)
@@ -4916,19 +4918,19 @@ local TestCases = {
 								}
 							}
 							ExtendedTableLibrary.deepFreeze(tbl)
-
+							
 							-- Test that main table is frozen
 							local success = pcall(function()
 								tbl.a = 999
 							end)
 							assert(not success, "Main table should be frozen")
-
+							
 							-- Test that nested table is frozen
 							success = pcall(function()
 								tbl.b.x = 999
 							end)
 							assert(not success, "Nested table should be frozen")
-
+							
 							-- Test that deeply nested table is frozen
 							success = pcall(function()
 								tbl.b.y.z = 999
@@ -4949,19 +4951,19 @@ local TestCases = {
 								}
 							}
 							ExtendedTableLibrary.deepFreeze(tbl, 1)
-
+							
 							-- Main table should be frozen
 							local success = pcall(function()
 								tbl.a = 999
 							end)
 							assert(not success, "Main table should be frozen")
-
+							
 							-- First level nested table should be frozen
 							success = pcall(function()
 								tbl.b.x = 999
 							end)
 							assert(not success, "First level nested table should be frozen")
-
+							
 							-- Second level nested table should NOT be frozen
 							success = pcall(function()
 								tbl.b.y.z = 999
@@ -4983,13 +4985,13 @@ local TestCases = {
 								}
 							}
 							ExtendedTableLibrary.deepFreeze(tbl, 0)
-
+							
 							-- Main table should be frozen
 							local success = pcall(function()
 								tbl.a = 999
 							end)
 							assert(not success, "Main table should be frozen even with depth 0")
-
+							
 							-- Nested table should NOT be frozen
 							success = pcall(function()
 								tbl.b.x = 999
@@ -5003,19 +5005,19 @@ local TestCases = {
 						Function = function()
 							local arr = {1, 2, {3, 4, {5, 6}}}
 							ExtendedTableLibrary.deepFreeze(arr)
-
+							
 							-- Array should be frozen
 							local success = pcall(function()
 								arr[1] = 999
 							end)
 							assert(not success, "Array should be frozen")
-
+							
 							-- Nested array should be frozen
 							success = pcall(function()
 								arr[3][1] = 999
 							end)
 							assert(not success, "Nested array should be frozen")
-
+							
 							-- Deeply nested array should be frozen
 							success = pcall(function()
 								arr[3][3][1] = 999
@@ -5028,9 +5030,9 @@ local TestCases = {
 						Function = function()
 							local tbl = {}
 							local frozen = ExtendedTableLibrary.deepFreeze(tbl)
-
+							
 							assert(frozen == tbl, "Should return the same table reference")
-
+							
 							local success = pcall(function()
 								tbl.a = 1
 							end)
@@ -5042,14 +5044,14 @@ local TestCases = {
 						Function = function()
 							local tbl = {a = 1, b = 2}
 							tbl.self = tbl
-
+							
 							ExtendedTableLibrary.deepFreeze(tbl)
-
+							
 							local success = pcall(function()
 								tbl.a = 999
 							end)
 							assert(not success, "Table with circular reference should be frozen")
-
+							
 							success = pcall(function()
 								tbl.self.b = 999
 							end)
@@ -5061,14 +5063,14 @@ local TestCases = {
 						Function = function()
 							local shared = {data = "shared"}
 							local tbl = {ref1 = shared, ref2 = shared}
-
+							
 							ExtendedTableLibrary.deepFreeze(tbl)
-
+							
 							local success = pcall(function()
 								tbl.ref1.data = "modified"
 							end)
 							assert(not success, "Shared subtable should be frozen")
-
+							
 							success = pcall(function()
 								tbl.ref2.data = "modified"
 							end)
@@ -5080,11 +5082,11 @@ local TestCases = {
 						Function = function()
 							local tbl = {a = 1, b = 2, c = {x = 10}}
 							ExtendedTableLibrary.deepFreeze(tbl)
-
+							
 							-- Should still be able to read values
 							assert(tbl.a == 1, "Should still be able to read values")
 							assert(tbl.c.x == 10, "Should still be able to read nested values")
-
+							
 							-- Should still be able to iterate
 							local count = 0
 							for k, v in pairs(tbl) do
@@ -5105,28 +5107,28 @@ local TestCases = {
 								nested = {value = "nested"}
 							}
 							ExtendedTableLibrary.deepFreeze(tbl)
-
+							
 							-- Test all key types are protected
 							local success = pcall(function()
 								tbl[1] = "modified"
 							end)
 							assert(not success, "Number key should be protected")
-
+							
 							success = pcall(function()
 								tbl["string"] = "modified"
 							end)
 							assert(not success, "String key should be protected")
-
+							
 							success = pcall(function()
 								tbl[true] = "modified"
 							end)
 							assert(not success, "Boolean key should be protected")
-
+							
 							success = pcall(function()
 								tbl[keyTable] = "modified"
 							end)
 							assert(not success, "Table key should be protected")
-
+							
 							success = pcall(function()
 								tbl.nested.value = "modified"
 							end)
@@ -5145,7 +5147,7 @@ local TestCases = {
 								nested = {inner = "value"}
 							}
 							ExtendedTableLibrary.deepFreeze(tbl)
-
+							
 							-- Non-table values should remain accessible and unchanged
 							assert(tbl.num == 42, "Number should remain accessible")
 							assert(tbl.str == "hello", "String should remain accessible")
@@ -5528,7 +5530,7 @@ local TestCases = {
 						Function = function()
 							local tbl = {a = "complex", b = {nested = "table"}, c = 42, d = false, e = nil}
 							local result = ExtendedTableLibrary.toSet(tbl)
-
+							
 							-- Check that all non-nil keys are present with value true
 							assert(result.a == true, "Should convert key 'a' to true regardless of original value")
 							assert(result.b == true, "Should convert key 'b' to true regardless of original value")
@@ -5542,17 +5544,17 @@ local TestCases = {
 						Function = function()
 							local tbl = {apple = 1, banana = 2, cherry = 3}
 							local set = ExtendedTableLibrary.toSet(tbl)
-
+							
 							assert(set.apple == true, "Should be able to test membership of 'apple'")
 							assert(set.banana == true, "Should be able to test membership of 'banana'")
 							assert(set.cherry == true, "Should be able to test membership of 'cherry'")
 							assert(set.grape == nil, "Should return nil for non-member 'grape'")
-
+							
 							-- Practical membership test
 							local function isMember(item)
 								return set[item] == true
 							end
-
+							
 							assert(isMember("apple") == true, "Membership test should work for existing key")
 							assert(isMember("grape") == false, "Membership test should work for non-existing key")
 						end,
@@ -5564,10 +5566,10 @@ local TestCases = {
 							local keyTable2 = {id = 2}
 							local tbl = {[keyTable1] = "first", [keyTable2] = "second"}
 							local set = ExtendedTableLibrary.toSet(tbl)
-
+							
 							assert(set[keyTable1] == true, "Should preserve table key reference 1")
 							assert(set[keyTable2] == true, "Should preserve table key reference 2")
-
+							
 							-- Test that it's the same reference
 							local newTable = {id = 1}
 							assert(set[newTable] == nil, "Different table with same content should not be a member")
