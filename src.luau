@@ -24,7 +24,7 @@
 	Important Notes:
 	- This library is designed for the Luau environment and may use Luau-specific functions.
 	- While partially optimized, be mindful of performance implications when using deep/recursive functions on very large tables.
-	- Providing malformed inputs on non-strict mode may result in errors or undefined behavior.
+	- Providing malformed inputs on non-strict mode (`STRICT_MODE` on line 865) may result in errors or undefined behavior.
 ]]
 
 --// Types \\--
