@@ -96,7 +96,7 @@ type ExtendedTableLibrary = {
 	]=]
 
 	--[=[
-		MergeTablesWith
+		MergeTables
 
 		Recursively merging tables, combining their keys and values.
 		If a key exists in more than one tables:
@@ -111,10 +111,10 @@ type ExtendedTableLibrary = {
 		@param ... Two or more tables to merge.
 		@return A new table or modified first table with all inputs merged.
 	]=]
-	mergeTablesWith: <K, V>(inPlace: boolean?, depth: number?, ...table<K, V>) -> (table<K, V>),
+	mergeTables: <K, V>(inPlace: boolean?, depth: number?, ...table<K, V>) -> (table<K, V>),
 
 	--[=[
-		MergeWith
+		MergeTablesWith
 
 		Recursively merges multiple tables, allowing a custom resolver function to handle conflicts.
 		If a key exists in more than one table:
@@ -131,7 +131,7 @@ type ExtendedTableLibrary = {
 		@param ... Two or more tables to merge.
 		@return A new table or modified first table with all inputs merged.
 	]=]
-	mergeWith: <K, V>(inPlace: boolean?, depth: number?, resolver: (K, V, V) -> (any), ...table<K, V>) -> table<K, V>,
+	mergeTablesWith: <K, V>(inPlace: boolean?, depth: number?, resolver: (K, V, V) -> (any), ...table<K, V>) -> table<K, V>,
 
 	--[=[
 		AccumulateTables
@@ -203,7 +203,7 @@ type ExtendedTableLibrary = {
 
 		@return A new table with only the key-value pairs that match the predicate.
 	]=]
-	filterTable: <K, V>(tbl: table<K | U, V>, predicate: (K, V) -> boolean, preAllocate: boolean?) -> table<K, V>,
+	filterTable: <K, V, U>(tbl: table<K | U, V>, predicate: (K | U, V) -> boolean, preAllocate: boolean?) -> table<U, V>,
 
 	--[=[
 		ReduceTable
@@ -255,25 +255,33 @@ type ExtendedTableLibrary = {
 		TableIntersection
 
 		Finds the intersection of two tables, returning a new table containing only the keys and values
-		that are present in both tables.
+		that are present in both tables. The value from the first table is used in the result.
 
 		@param tbl1 The first table.
 		@param tbl2 The second table.
+		@param matchValue? If true, checks both keys and values for intersection (default is false).
 		@return A new table containing only the key-value pairs that exist in both input tables.
 	]=]
-	tableIntersection: <K, V>(tbl1: table<K, V>, tbl2: table<K, V>) -> table<K, V>,
+	tableIntersection: <K, V>(tbl1: table<K, V>, tbl2: table<K, V>, matchValue: boolean?) -> table<K, V>,
 
 	--[=[
 		TableDifference
 
 		Finds the difference between two tables, returning a new table containing only the keys and values
-		that are present in the first table but not in the second.
+		that are present in the first table but not in the second table. 
+		
+		If `matchValue` is true, it only checks differences for keys that exist in both tables, and the return result is only for keys that have different values.
+		If `symmetric` is true, returns the symmetric difference (keys present in either table but not both).
+		
+		Note: `matchValue` and `symmetric` options are incompatible and cannot both be true.
 
 		@param tbl1 The first table.
 		@param tbl2 The second table.
+		@param matchValue? If true, only checks differences for keys that exist in both tables, returning keys with different values (default is false).
+		@param symmetric? If true, returns the symmetric difference (keys in either table but not both) (default is false).
 		@return A new table containing only the key-value pairs that exist in `tbl1` but not in `tbl2`.
 	]=]
-	tableDifference: <K, V>(tbl1: table<K, V>, tbl2: table<K, V>) -> table<K, V>,
+	tableDifference: <K, V>(tbl1: table<K, V>, tbl2: table<K, V>, matchValue: boolean?, symmetric: boolean?) -> table<K, V>,
 
 	--[=[
 		RemoveAll
@@ -362,28 +370,50 @@ type ExtendedTableLibrary = {
 		CompactArray
 
 		Compacts a sparse array into a contiguous array, removing any gaps in indices.
+		
+		A sparse array is an array with missing indices (e.g., {[1] = "a", [3] = "c", [5] = "e"}).
+		This function creates a new array where all elements are moved to consecutive indices 
+		starting from 1 (e.g., {[1] = "a", [2] = "c", [3] = "e"}).
 
-		@param array The array to compact. This can be a sparse array (with missing indices).
-		@param allocateExactSize? If true, creates a new array with a size equal to the number of elements.
-				If false or nil, use the same size as the original table, which is generally faster if exact size isn't critical.
-		@return A compacted (non-sparse) version of the input array. May return the original array if it is already compact.
+		@param array The sparse array to compact. Can have missing indices between elements.
+		@param allocateExactSize? If true, creates a new array with size equal to the number of elements.
+				If false or nil, uses the same size as the original table for better performance.
+		@param isArray? If true, uses optimized array iteration that leverages Luau's guaranteed 
+				in-order traversal for arrays (indices stored in array portion, not hash portion).
+				If false, treats input as a general table. Default is false.
+		@return A compacted array with consecutive indices starting from 1. May return the 
+				original array if it's already compact.
 	]=]
-	compactArray: <T>(array: array<T>, allocateExactSize: boolean?) -> array<T>,
+	compactArray: <T>(array: array<T>, allocateExactSize: boolean?, isArray: boolean?) -> array<T>,
 
 	--[=[
-		FillArray
+		FillWithValue
 
 		Fills an array with a specified value from a start index to an end index.
-		If the end index is not specified, it fills until the end of the array.
+		Optimized for filling with the same value repeatedly.
 
 		@param array The array to fill.
 		@param value The value to fill the array with.
 		@param startIndex? The index to start filling from (default is 1).
 		@param endIndex? The index to stop filling at (default is the length of the array).
-		@param sourceArray? If provided, the function will fill the array with values from this source array,
-			repeating the source if necessary. If not provided, it fills with the specified value.
+		@param sourceArray? An optional pre-allocated array containing the fill value, used for performance optimization
+			when filling large ranges. Should contain only the same value as the `value` parameter.
+			If not provided, one may be created internally for large fills.
 	]=]
-	fillArray: <T>(array: array<T>, value: T, startIndex: number?, endIndex: number?, sourceArray: array<T>?) -> (),
+	fillWithValue: <T>(array: array<T>, value: T, startIndex: number?, endIndex: number?, sourceArray: array<T>?) -> (),
+
+	--[=[
+		FillWithPattern
+
+		Fills an array with values from a source array, repeating the source array pattern as needed.
+		This is useful for filling with repeating patterns or sequences.
+
+		@param array The array to fill.
+		@param pattern The array containing the pattern/values to fill with. Cannot be empty.
+		@param startIndex? The index to start filling from (default is 1).
+		@param endIndex? The index to stop filling at (default is the length of the array).
+	]=]
+	fillWithPattern: <T>(array: array<T>, pattern: array<T>, startIndex: number?, endIndex: number?) -> (),
 
 	--[=[
 		ReverseArray
@@ -695,7 +725,7 @@ type ExtendedTableLibrary = {
 		@param valueType The type of values to count (e.g., "string", "number").
 		@return The number of values in the table that match the specified type.
 	]=]
-	countValuesByType: <K, V>(tbl: table<K, V>, valueType: string) -> number,
+	countValuesByType: <K, V>(tbl: table<K, V>, value: V) -> number,
 
 	--[=[
 		KeysOfValue
@@ -729,6 +759,7 @@ type ExtendedTableLibrary = {
 		DeepEqual
 
 		Recursively compares two values for equality, handling nested tables.
+		Only values are compared deepy, keys are compared by identity.
 
 		@param a The first value.
 		@param b The second value.
@@ -942,7 +973,7 @@ local function getAllocatedHashSize<K, V>(tbl: table<K, V>): number
 	-- Iterate with negative indices to probe the hash part directly.
 	for i = -MAX_TABLE_SIZE, -1 do
 		probeTable[i] = ONE_CONST
-		if #probeTable == ZERO_CONST then return i - 1 end -- The size is found.
+		if #probeTable == ZERO_CONST then return i + MAX_TABLE_SIZE end -- The size is found.
 	end
 
 	return MAX_TABLE_SIZE
@@ -950,7 +981,6 @@ end
 
 local function getMemorySize(v: any, cache: table?): number
 	if cache and cache[v] then return 0 end
-
 	local valueType = type(v)
 	-- If value type isn't table, cache is guaranteed to exist.
 
@@ -961,15 +991,34 @@ local function getMemorySize(v: any, cache: table?): number
 		-- Luau memory calculation based on known struct sizes.
 		-- TValue (value part): 16 bytes
 		-- LuaNode (TKey-TValue pair in hash): 32 bytes
-		-- Table object overhead: 64 bytes (Tvalue + Table struct)
-		local tblSize = 64 + arraySize * 16 + hashSize * 32
+		-- Table object overhead: 48 bytes (Table struct)
+		local tblSize = 48 + arraySize * 16 + hashSize * 32
 
 		if cache then
+			tblSize = tblSize + getMemorySize(getmetatable(v), cache)
 			cache[v] = true -- Mark this table as processed to avoid infinite recursion.
 			
-			for k, v in next, v, arraySize do
-				tblSize = tblSize + getMemorySize(k, cache) -- Recursively add size of nested keys.
-				tblSize = tblSize + getMemorySize(v, cache) -- Recursively add size of nested values.
+			if arraySize ~= 0 then
+				local nextIndex = 1
+				for k, subValue in next, v do
+					if k ~= nextIndex then break end
+					tblSize = tblSize + getMemorySize(subValue, cache)
+					nextIndex = nextIndex + 1
+				end
+
+				if hashSize == 0 then return tblSize end
+
+				for k, subValue in next, v, arraySize do
+					tblSize = tblSize + getMemorySize(k, cache) -- Recursively add size of nested keys.
+					tblSize = tblSize + getMemorySize(subValue, cache) -- Recursively add size of nested values.
+				end
+			else
+				if hashSize == 0 then return tblSize end
+
+				for k, subValue in next, v do
+					tblSize = tblSize + getMemorySize(k, cache) -- Recursively add size of nested keys.
+					tblSize = tblSize + getMemorySize(subValue, cache) -- Recursively add size of nested values.
+				end
 			end
 		end
 
@@ -984,7 +1033,7 @@ local function getMemorySize(v: any, cache: table?): number
 		return 24 + math.ceil(stringLength / 8) * 8 -- TString struct + size of the string.
 	elseif valueType == "userdata" then
 		(cache :: table)[v] = true -- Mark this userdata as processed.
-		return 24 + getMemorySize(getmetatable(v)) -- Udata struct + size of the userdata's metatable.
+		return 24 + getMemorySize(getmetatable(v), cache) -- Udata struct + size of the userdata's metatable.
 	elseif valueType == "function" then
 		(cache :: table)[v] = true -- Mark this function as processed.
 		return 48 + 16 -- Closure struct + 1 UpVal minimum.
@@ -1004,9 +1053,9 @@ local function getTableMemorySize<K, V>(tbl: table<K, V>, includeContents: boole
 
 	if includeContents then
 		-- If includeContents is true, we need to recursively calculate the size of the table's contents.
-		return getMemorySize(tbl, {})
+		return 16 + getMemorySize(tbl, {})
 	else
-		return getMemorySize(tbl)
+		return 16 + getMemorySize(tbl)
 	end
 end
 
@@ -1019,11 +1068,18 @@ local function getTableSize<K, V>(tbl: table<K, V>, isContiguous: boolean?): num
 	if isContiguous ~= false then
 		-- Start with the length operator for the contiguous array part.
 		local size = #tbl
+
 		-- Iterate through the hash part to count any remaining elements.
-		for _ in next, tbl, size do
-			size = size + 1
+		if size == 0 then
+			for _ in next, tbl do
+				size = size + 1
+			end
+		else
+			for _ in next, tbl, size do
+				size = size + 1
+			end
 		end
-		return size
+			return size
 	end
 
 	-- If not contiguous, iterate through every element, which is slower but always accurate.
@@ -1047,7 +1103,7 @@ local function mergeInPlace(valueMap: table, depth: number, resolver: ((any, any
 		valueMap[result] = resultCache
 	end
 
-	for i = 2, select("#", ...) do
+	for i = 1, select("#", ...) do
 		local tbl = select(i, ...)
 		-- If this table has already been merged, skip it to avoid infinite recursion.
 		if resultCache[tbl] then continue end
@@ -1055,9 +1111,15 @@ local function mergeInPlace(valueMap: table, depth: number, resolver: ((any, any
 
 		for k, v in tbl do
 			local existingValue = result[k]
+			local valueType = type(v)
+
 			if existingValue == nil then
 				-- If the key does not exist in the result, simply add it.
-				result[k] = deepCopy(v)
+				if valueType == "table" or CHECK_BUFFER_VALUE and valueType == "buffer" then
+					result[k] = deepCopy(v)
+				else
+					result[k] = v
+				end
 				continue
 			end
 
@@ -1069,7 +1131,6 @@ local function mergeInPlace(valueMap: table, depth: number, resolver: ((any, any
 				continue
 			end
 
-			local valueType = type(v)
 			if valueType ~= "table" then
 				if resolver then
 					result[k] = resolver(k, existingValue, v)
@@ -1077,8 +1138,8 @@ local function mergeInPlace(valueMap: table, depth: number, resolver: ((any, any
 				continue
 			end
 
-			if depth > 1 then
-				result[k] = mergeInPlace(valueMap, depth - 1, existingValue :: any, v)
+			if depth > 0 then
+				result[k] = mergeInPlace(valueMap, depth - 1, resolver, existingValue :: any, v)
 			end
 		end
 	end
@@ -1116,7 +1177,7 @@ local function mergeTablesWith<K, V>(inPlace: boolean?, depth: number?, resolver
 end
 
 local function accumulateInPlace(valueMap: table, result: table, ...: table): table
-	for i = 2, select("#", ...) do
+	for i = 1, select("#", ...) do
 		local tbl = select(i, ...)
 		-- If this table has already been accumulated, skip it to avoid infinite recursion.
 		if valueMap[tbl] then continue end
@@ -1124,14 +1185,18 @@ local function accumulateInPlace(valueMap: table, result: table, ...: table): ta
 
 		for k, v in tbl do
 			local existingValue = result[k]
+			local valueType = type(v)
 			if existingValue == nil then
 				-- If the key does not exist in the result, simply add it.
-				result[k] = deepCopy(v)
+				if valueType == "table" or CHECK_BUFFER_VALUE and valueType == "buffer" then
+					result[k] = deepCopy(v)
+				else
+					result[k] = v
+				end
 				continue
 			end
 
 			local existingType = type(existingValue)
-			local valueType = type(v)
 
 			if existingType ~= valueType then
 				-- If types are different, throw an error.
@@ -1172,10 +1237,11 @@ local function diffTables<kA, vA, kB, vB>(old: table<kA, vA>, new: table<kB, vB>
 
 	-- Find added and changed keys.
 	for k, v in new :: table do
-		if old[k] == nil then
+		local oldValue = old[k]
+		if oldValue == nil then
 			added[k] = v
-		elseif old[k] ~= v then
-			changed[k] = old[k]
+		elseif oldValue ~= v then
+			changed[k] = v
 		end
 	end
 
@@ -1251,7 +1317,7 @@ local function mapTable<K, V, U>(tbl: table<K, V>, callback: (K, V) -> U): table
 	return result
 end
 
-local function filterTable<K, V>(tbl: table<K | U, V>, predicate: (K, V) -> boolean, preAllocate: boolean?): table<K, V>
+local function filterTable<K, V, U>(tbl: table<K | U, V>, predicate: (K | U, V) -> boolean, preAllocate: boolean?): table<U, V>
 	if STRICT_MODE then
 		checkArgs("tbl", "table", tbl)
 		checkArgs("predicate", "function", predicate)
@@ -1363,7 +1429,7 @@ local function invertTable<K, V>(tbl: table<K, V>): table<V, K>
 	return result
 end
 
-local function tableIntersection<K, V>(tbl1: table<K, V>, tbl2: table<K, V>): table<K, V>
+local function tableIntersection<K, V>(tbl1: table<K, V>, tbl2: table<K, V>, matchValue: boolean?): table<K, V>
 	if STRICT_MODE then
 		checkArgs("tbl1", "table", tbl1)
 		checkArgs("tbl2", "table", tbl2)
@@ -1372,34 +1438,58 @@ local function tableIntersection<K, V>(tbl1: table<K, V>, tbl2: table<K, V>): ta
 	local result: table<K, V> = {}
 
 	-- Iterate through each key-value pair in the first table.
-	for k, v in tbl1 do
-		if tbl2[k] ~= nil then
-			result[k] = v -- If the key exists in both tables, add it to the result.
+	if matchValue then
+		for k, v in tbl1 :: table do
+			if tbl2[k] == v then
+				result[k] = v -- If the key exists in both tables, add it to the result.
+			end
+		end
+	else
+		for k, v in tbl1 do
+			if tbl2[k] ~= nil then
+				result[k] = v -- If the key exists in both tables, add it to the result.
+			end
 		end
 	end
 
 	return result
 end
 
-local function tableDifference<K, V>(tbl1: table<K, V>, tbl2: table<K, V>): table<K, V>
+local function tableDifference<K, V>(tbl1: table<K, V>, tbl2: table<K, V>, matchValue: boolean?, symmetric: boolean?): table<K, V>
 	if STRICT_MODE then
 		checkArgs("tbl1", "table", tbl1)
 		checkArgs("tbl2", "table", tbl2)
+		checkArgs("matchValue", "boolean", matchValue, true)
+		checkArgs("symmetric", "boolean", symmetric, true)
+
+		if matchValue and symmetric then
+			error("Cannot use both 'matchValue' and 'symmetric' options together", 2)
+		end
 	end
 
 	local result: table<K, V> = {}
-
-	-- Iterate through each key-value pair in the first table.
-	for k, v in tbl1 do
-		if tbl2[k] == nil then
-			result[k] = v -- If the key does not exist in the second table, add it to the result.
+	if matchValue then
+		for k, v in tbl1 :: table do
+			if tbl2[k] ~= nil and tbl2[k] ~= v then
+				result[k] = v -- If the key exists in both tables but values differ, add it to the result.
+			end
 		end
-	end
-	
-	-- Iterate through each key-value pair in the second table.
-	for k, v in tbl2 do
-		if tbl1[k] == nil then
-			result[k] = v -- If the key does not exist in the first table, add it to the result.
+	elseif symmetric then
+		for k, v in tbl1 do
+			if tbl2[k] == nil then
+				result[k] = v -- If the key does not exist in the second table, add it to the result.
+			end
+		end
+		for k, v in tbl2 do
+			if tbl1[k] == nil then
+				result[k] = v -- If the key does not exist in the first table, add it to the result.
+			end
+		end
+	else
+		for k, v in tbl1 do
+			if tbl2[k] == nil then
+				result[k] = v -- If the key does not exist in the second table, add it to the result.
+			end
 		end
 	end
 
@@ -1495,14 +1585,18 @@ local function concatArrays<T>(inPlace: boolean?, ...: array<T>): array<T>
 		totalSize = totalSize + #subArray -- Add the size of each sub-array.
 	end
 
+	local firstArray = (...)
+
 	-- Create the result array with the exact size needed.
-	local result: array<T> = inPlace and (...) or table.create(totalSize)
+	local result: array<T> = inPlace and firstArray or table.create(totalSize)
+	local insertIndex = #firstArray + 1
 
 	if inPlace then
 		setArraySize(result, totalSize) -- Resize the in-place array to the new size.
+	else
+		table.move(firstArray, 1, insertIndex - 1, 1, result) -- Copy the first array into the result.
 	end
 
-	local insertIndex = 1
 	for i = 2, argCount do
 		local subArray = select(i, ...)
 		local subSize = #subArray
@@ -1571,7 +1665,6 @@ local function flattenArray<T, U>(src: array<T>, depth: number?)
 		return result
 	else
 		local result: array<U> = src
-		local insertIndex = 1
 
 		if depth == -1 then
 			-- If depth is -1, flatten the array completely.
@@ -1582,6 +1675,8 @@ local function flattenArray<T, U>(src: array<T>, depth: number?)
 			src, result = result, {}
 
 			local hasSubArrays = false
+			local insertIndex = 1
+
 			for _, subArray in src do
 				if type(subArray) == "table" then
 					local subSize = #(subArray :: array)
@@ -1601,10 +1696,11 @@ local function flattenArray<T, U>(src: array<T>, depth: number?)
 	end
 end
 
-local function compactArray<T>(array: array<T>, allocateExactSize: boolean?)
+local function compactArray<T>(array: array<T>, allocateExactSize: boolean?, isArray: boolean?)
 	if STRICT_MODE then
 		checkArgs("array", "table", array)
 		checkArgs("allocateExactSize", "boolean", allocateExactSize, true)
+		checkArgs("isArray", "boolean", isArray, true)
 	end
 
 	-- Find the last numerical index in the contiguous part of the array starting from 1.
@@ -1632,9 +1728,6 @@ local function compactArray<T>(array: array<T>, allocateExactSize: boolean?)
 		end
 	end
 
-	-- The array is sparse, so we need to compact it.
-	local nextIndex = startIndex + 1
-
 	local result: array<T>
 	if allocateExactSize then
 		-- Count all elements to allocate a properly sized array
@@ -1655,27 +1748,89 @@ local function compactArray<T>(array: array<T>, allocateExactSize: boolean?)
 	end
 
 	local resultIndex = (lastIndex or 0) + 1
-
-	-- Iterate through the rest of the elements in the sparse part of the array.
-	-- `next` guarantees traversal in index order for the array part.
-	for i, v in next, array, startIndex do
-		if i ~= nextIndex then
-			-- A gap in indices is found. Move the previous block of elements.
-			table.move(array, startIndex, nextIndex - 1, resultIndex, result)
-			resultIndex += (nextIndex - startIndex)
-			startIndex = i
+	if isArray then
+		local nextIndex = startIndex + 1
+		-- Iterate through the rest of the elements in the sparse part of the array.
+		-- `next` guarantees traversal in index order for the array part.
+		for i, v in next, array, startIndex do
+			if i ~= nextIndex then
+				-- A gap in indices is found. Move the previous block of elements.
+				table.move(array, startIndex, nextIndex - 1, resultIndex, result)
+				resultIndex += (nextIndex - startIndex)
+				startIndex = i
+			end
+			-- The next expected index in the current block.
+			nextIndex = i + 1
 		end
-		-- The next expected index in the current block.
-		nextIndex = i + 1
+
+		-- Move the final block of elements.
+		table.move(array, startIndex, nextIndex - 1, resultIndex, result)
+	else
+		local chunks: {[number]: number} = {} -- Maps an index to the other end of its chunk.
+
+		-- 1. Find and merge chunks in a single pass.
+		for i in next, array, lastIndex do
+			local connectsToPrev = chunks[i - 1]
+			local connectsToNext = chunks[i + 1]
+
+			if connectsToPrev then
+				-- This index bridges two existing chunks. Merge them.
+				if connectsToNext then
+					local start = connectsToPrev
+					local end_ = connectsToNext
+					chunks[start] = end_
+					chunks[end_] = start
+					if start ~= i - 1 then
+						chunks[i - 1] = nil
+					end
+					if end_ ~= i + 1 then
+						chunks[i + 1] = i
+					end
+				else -- Extend the previous chunk forward.			
+					local start = connectsToPrev
+					chunks[start] = i
+					if start ~= i - 1 then
+						chunks[i - 1] = nil
+					end
+					chunks[i] = start
+				end
+			elseif connectsToNext then
+				-- Extend the next chunk backward.
+				local end_ = connectsToNext
+				chunks[end_] = i
+				if end_ ~= i + 1 then
+					chunks[i + 1] = nil
+				end
+				chunks[i] = end_
+			else
+				-- This is a new, standalone chunk of size 1.
+				chunks[i] = i
+			end
+		end
+
+		-- 2. Collect the start points of each chunk for ordered copying.
+		local startPoints = {}
+		for start, end_ in next, chunks do
+			-- To avoid duplication, only add the actual start point of each chunk.
+			if start <= end_ then
+				table.insert(startPoints, start)
+			end
+		end
+		table.sort(startPoints) -- This sort is on a much smaller list (just the chunks).
+
+		-- 3. Use table.move to efficiently copy the data from the identified chunks.
+		for _, startIdx in startPoints do
+			local endIdx = chunks[startIdx]
+			local chunkSize = endIdx - startIdx + 1
+			table.move(array, startIdx, endIdx, resultIndex, result)
+			resultIndex = resultIndex + chunkSize
+		end
 	end
-
-	-- Move the final block of elements.
-	table.move(array, startIndex, nextIndex - 1, resultIndex, result)
-
+	
 	return result
 end
 
-local function fillArray<T>(array: array<T>, value: T, startIndex: number?, endIndex: number?, sourceArray: array<T>?)
+local function fillWithValue<T>(array: array<T>, value: T, startIndex: number?, endIndex: number?, sourceArray: array<T>?)
 	if STRICT_MODE then
 		checkArgs("array", "table", array)
 		-- checkArgs("value", "any", value)
@@ -1687,6 +1842,8 @@ local function fillArray<T>(array: array<T>, value: T, startIndex: number?, endI
 	local from = startIndex or 1
 	local to = endIndex or #array
 	local fillSize = to - from + 1
+
+	if fillSize <= 0 then return end -- No need to fill if the range is invalid.
 
 	if fillSize < MOVE_THRESHOLD then
 		-- If the fill size is small, fill with the specified value.
@@ -1711,7 +1868,7 @@ local function fillArray<T>(array: array<T>, value: T, startIndex: number?, endI
 					table.move(sourceArray, 1, fillArraySize, from + i * fillArraySize, array)
 				end
 
-				table.move(sourceArray, 1, fillSize % fillArraySize, from + lastIndex * fillArraySize, array)
+				table.move(sourceArray, 1, fillSize % fillArraySize, from + (lastIndex + 1) * fillArraySize, array)
 			end
 		else
 			-- If the fill size is small, fill with the specified value.
@@ -1719,6 +1876,37 @@ local function fillArray<T>(array: array<T>, value: T, startIndex: number?, endI
 				array[i] = value
 			end
 		end
+	end
+end
+
+local function fillWithPattern<T>(array: array<T>, pattern: array<T>, startIndex: number?, endIndex: number?)
+	if STRICT_MODE then
+		checkArgs("array", "table", array)
+		checkArgs("pattern", "table", pattern)
+		checkArgs("startIndex", "number", startIndex, true)
+		checkArgs("endIndex", "number", endIndex, true)
+	end
+
+	local patternSize = #pattern
+	if patternSize == 0 then
+		error("Pattern array cannot be empty", 2)
+	end
+
+	local from = startIndex or 1
+	local to = endIndex or #array
+	local fillSize = to - from + 1
+	if fillSize <= 0 then return end -- No need to fill if the range is invalid.
+
+	if fillSize <= patternSize then
+		table.move(pattern, 1, fillSize, from, array)
+	else
+		local lastIndex = fillSize // patternSize - 1
+
+		for i = 0, lastIndex do
+			table.move(pattern, 1, patternSize, from + i * patternSize, array)
+		end
+
+		table.move(pattern, 1, fillSize % patternSize, from + (lastIndex + 1) * patternSize, array)
 	end
 end
 
@@ -1753,9 +1941,9 @@ local function rotateArray<T>(array: array<T>, shift: number)
 
 	-- Use table.move to perform the rotation efficiently.
 	local temp = table.create(shift)
-	table.move(array, 1, shift, 1, temp) -- Store the first 'shift' elements in a temporary array.
-	table.move(array, shift + 1, size, 1) -- Move the rest of the elements to the front.
-	table.move(temp, 1, shift, size - shift + 1) -- Move the temporary elements to the end of the array.
+	table.move(array, size - shift + 1, size, 1, temp) -- Store the last 'shift' elements in a temporary array.
+	table.move(array, 1, size - shift, shift + 1, array) -- Move the first elements to the right.
+	table.move(temp, 1, shift, 1, array) -- Move the temporary elements to the beginning of the array.
 end
 
 local function sliceArray<T>(array: array<T>, startIndex: number?, endIndex: number?): array<T>
@@ -2019,11 +2207,11 @@ local function partitionArray<T>(array: array<T>, size: number): array<array<T>>
 	for i = 1, arraySize - size, size do
 		local partition: array<T> = table.create(size)
 		table.move(array, i, i + size - 1, 1, partition)
-		result[i // size + 1] = partition
+		result[math.ceil(i / size)] = partition
 	end
 
 	do
-		local remainingSize = (arraySize + 1) % size - 1
+		local remainingSize = (arraySize - 1) % size + 1
 		local partition: array<T> = table.create(remainingSize)
 		table.move(array, arraySize - remainingSize + 1, arraySize, 1, partition)
 		result[resultSize] = partition -- Add the last partition with remaining elements.
@@ -2161,7 +2349,10 @@ local function isSparseArray<K, V>(tbl: table<K, V>): boolean
 		nextIndex = i + 1
 	end
 
-	if exitIndex == nil then return false end
+	if type(exitIndex) ~= "number" then return false end
+	if exitIndex // 1 ~= exitIndex or exitIndex < 1 then
+		return false -- Not an array
+	end
 
 	for i, _ in next, tbl :: table, exitIndex do
 		if type(i) ~= "number" or i // 1 ~= i or i < 1 then
@@ -2333,9 +2524,9 @@ function deepCopy<K, V>(tbl: table<K, V>, valueMap: table?): table<K, V>
 		if shouldCloneKey then
 			copy[k] = nil
 			k = valueMap[k] or deepCopy(k :: K, valueMap :: table)
-			copy[k] = if shouldCloneValue then valueMap[v] or deepCopy(v) else v
+			copy[k] = if shouldCloneValue then valueMap[v] or deepCopy(v, valueMap :: table) else v
 		elseif shouldCloneValue then
-			copy[k] = valueMap[v] or deepCopy(v)
+			copy[k] = valueMap[v] or deepCopy(v, valueMap :: table)
 		end
 	end
 
@@ -2384,6 +2575,11 @@ local function deepEqual<A, B>(a: any, b: any, visited: table?): boolean
 		return buffer.readstring(a, 0, lenA) == buffer.readstring(b, 0, lenB)
 	end
 
+	if typeA == "number" and a ~= a then
+		-- Special case for NaN, which is not equal to itself.
+		return b ~= b
+	end
+
 	-- If types are not 'table' and they failed the initial 'a == b' check, they are not equal.
 	if typeA ~= "table" then return false end
 
@@ -2411,7 +2607,7 @@ local function deepEqual<A, B>(a: any, b: any, visited: table?): boolean
 
 	-- Recursively check if values for all keys in 'b' are deeply equal to those in 'a'.
 	for k, v in b do
-		if not deepEqual(v, a[k]) then return false end
+		if not deepEqual(v, a[k], visited) then return false end
 	end
 
 	-- If all checks pass, the tables are deeply equal.
@@ -2427,7 +2623,7 @@ local function deepFreeze<K, V>(tbl: table<K, V>, layers: number?, visited: tabl
 	if visited and visited[tbl] then return tbl end
 
 	if layers and layers ~= -1 then
-		if layers <= 1 then
+		if layers <= 0 then
 			return table.freeze(tbl)
 		end
 		layers = layers - 1
@@ -2436,6 +2632,7 @@ local function deepFreeze<K, V>(tbl: table<K, V>, layers: number?, visited: tabl
 	end
 
 	visited = visited or {}
+	visited[tbl] = true -- Mark this table as visited to handle cycles.
 
 	local TABLE_TYPE = "table"
 	TABLE_TYPE = TABLE_TYPE -- Prevent folding.
@@ -2718,7 +2915,8 @@ local Library = {
 	unionArrays = unionArrays,
 	flattenArray = flattenArray,
 	compactArray = compactArray,
-	fillArray = fillArray,
+	fillWithValue = fillWithValue,
+	fillWithPattern = fillWithPattern,
 	reverseArray = reverseArray,
 	rotateArray = rotateArray,
 	sliceArray = sliceArray,
